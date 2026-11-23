@@ -46,12 +46,12 @@ Run from the project root with the virtual environment active.
 ```
 New-Item -ItemType Directory -Force datasets\raw
 Invoke-WebRequest -Uri "https://github.com/ultralytics/assets/releases/download/v0.0.0/construction-ppe.zip" -OutFile datasets\raw\construction-ppe.zip
-Get-FileHash datasets\raw\construction-ppe.zip -Algorithm SHA256
+$hash = (Get-FileHash datasets\raw\construction-ppe.zip -Algorithm SHA256).Hash
 Expand-Archive datasets\raw\construction-ppe.zip -DestinationPath datasets\raw
 python -m scripts.run_validation
 python -m scripts.analyze_dataset
-python -m scripts.make_split --profile core --source-sha256 <hash>
-python -m scripts.make_split --profile core_missing --source-sha256 <hash>
+python -m scripts.make_split --profile core --source-sha256 $hash
+python -m scripts.make_split --profile core_missing --source-sha256 $hash
 ```
 
 Each `make_split` run prints a `dataset_version` and saves a small manifest in `datasets/versions/`. Commit the manifest; the images stay out of git. Record the version in every MLflow run.
