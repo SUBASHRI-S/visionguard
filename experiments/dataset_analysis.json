@@ -1,0 +1,437 @@
+{
+  "root": "datasets\\raw\\construction-ppe",
+  "class_names": [
+    "helmet",
+    "gloves",
+    "vest",
+    "boots",
+    "goggles",
+    "Person",
+    "no_helmet",
+    "no_goggle",
+    "no_gloves",
+    "no_boots",
+    "forklift",
+    "no_vest"
+  ],
+  "thresholds": {
+    "small_area_fraction": 0.005,
+    "medium_area_fraction": 0.05,
+    "dark_below_mean_gray": 60,
+    "bright_above_mean_gray": 180
+  },
+  "splits": {
+    "train": {
+      "images": 800,
+      "readable_images": 800,
+      "unreadable_images": [],
+      "background_images": 0,
+      "malformed_label_lines": 0,
+      "distinct_resolutions": 9,
+      "most_common_resolutions": [
+        {
+          "size": [
+            2048,
+            1360
+          ],
+          "count": 294
+        },
+        {
+          "size": [
+            2048,
+            1152
+          ],
+          "count": 113
+        },
+        {
+          "size": [
+            1360,
+            2048
+          ],
+          "count": 113
+        },
+        {
+          "size": [
+            1152,
+            2048
+          ],
+          "count": 113
+        },
+        {
+          "size": [
+            2048,
+            2048
+          ],
+          "count": 112
+        }
+      ],
+      "brightness": {
+        "dark": 3,
+        "normal": 797,
+        "bright": 0
+      },
+      "objects_per_image_mean": 14.88,
+      "objects_per_image_max": 76,
+      "classes": {
+        "helmet": {
+          "instances": 1282,
+          "images": 613,
+          "small": 691,
+          "medium": 578,
+          "large": 13
+        },
+        "gloves": {
+          "instances": 1548,
+          "images": 546,
+          "small": 932,
+          "medium": 612,
+          "large": 4
+        },
+        "vest": {
+          "instances": 1476,
+          "images": 644,
+          "small": 642,
+          "medium": 345,
+          "large": 489
+        },
+        "boots": {
+          "instances": 2003,
+          "images": 576,
+          "small": 1082,
+          "medium": 917,
+          "large": 4
+        },
+        "goggles": {
+          "instances": 612,
+          "images": 437,
+          "small": 378,
+          "medium": 233,
+          "large": 1
+        },
+        "Person": {
+          "instances": 1962,
+          "images": 791,
+          "small": 611,
+          "medium": 455,
+          "large": 896
+        },
+        "no_helmet": {
+          "instances": 634,
+          "images": 337,
+          "small": 427,
+          "medium": 198,
+          "large": 9
+        },
+        "no_goggle": {
+          "instances": 265,
+          "images": 227,
+          "small": 264,
+          "medium": 1,
+          "large": 0
+        },
+        "no_gloves": {
+          "instances": 839,
+          "images": 340,
+          "small": 665,
+          "medium": 173,
+          "large": 1
+        },
+        "no_boots": {
+          "instances": 569,
+          "images": 244,
+          "small": 279,
+          "medium": 287,
+          "large": 3
+        },
+        "forklift": {
+          "instances": 275,
+          "images": 201,
+          "small": 13,
+          "medium": 69,
+          "large": 193
+        },
+        "no_vest": {
+          "instances": 437,
+          "images": 300,
+          "small": 179,
+          "medium": 94,
+          "large": 164
+        }
+      },
+      "cooccurrence": {
+        "Person+boots": 576,
+        "Person+forklift": 193,
+        "Person+gloves": 546,
+        "Person+goggles": 437,
+        "Person+helmet": 612,
+        "Person+no_boots": 244,
+        "Person+no_gloves": 340,
+        "Person+no_goggle": 227,
+        "Person+no_helmet": 337,
+        "Person+no_vest": 300,
+        "Person+vest": 643,
+        "boots+forklift": 124,
+        "boots+gloves": 465,
+        "boots+goggles": 337,
+        "boots+helmet": 508,
+        "boots+no_boots": 84,
+        "boots+no_gloves": 228,
+        "boots+no_goggle": 170,
+        "boots+no_helmet": 199,
+        "boots+no_vest": 200,
+        "boots+vest": 490,
+        "forklift+gloves": 125,
+        "forklift+goggles": 105,
+        "forklift+helmet": 134,
+        "forklift+no_boots": 65,
+        "forklift+no_gloves": 88,
+        "forklift+no_goggle": 52,
+        "forklift+no_helmet": 94,
+        "forklift+no_vest": 88,
+        "forklift+vest": 151,
+        "gloves+goggles": 375,
+        "gloves+helmet": 490,
+        "gloves+no_boots": 135,
+        "gloves+no_gloves": 136,
+        "gloves+no_goggle": 135,
+        "gloves+no_helmet": 185,
+        "gloves+no_vest": 162,
+        "gloves+vest": 485,
+        "goggles+helmet": 347,
+        "goggles+no_boots": 138,
+        "goggles+no_gloves": 137,
+        "goggles+no_goggle": 40,
+        "goggles+no_helmet": 155,
+        "goggles+no_vest": 110,
+        "goggles+vest": 386,
+        "helmet+no_boots": 140,
+        "helmet+no_gloves": 215,
+        "helmet+no_goggle": 175,
+        "helmet+no_helmet": 165,
+        "helmet+no_vest": 220,
+        "helmet+vest": 525,
+        "no_boots+no_gloves": 155,
+        "no_boots+no_goggle": 78,
+        "no_boots+no_helmet": 154,
+        "no_boots+no_vest": 106,
+        "no_boots+vest": 191,
+        "no_gloves+no_goggle": 147,
+        "no_gloves+no_helmet": 201,
+        "no_gloves+no_vest": 192,
+        "no_gloves+vest": 242,
+        "no_goggle+no_helmet": 99,
+        "no_goggle+no_vest": 138,
+        "no_goggle+vest": 131,
+        "no_helmet+no_vest": 166,
+        "no_helmet+vest": 273,
+        "no_vest+vest": 154
+      }
+    },
+    "val": {
+      "images": 200,
+      "readable_images": 200,
+      "unreadable_images": [],
+      "background_images": 0,
+      "malformed_label_lines": 0,
+      "distinct_resolutions": 9,
+      "most_common_resolutions": [
+        {
+          "size": [
+            2048,
+            1360
+          ],
+          "count": 67
+        },
+        {
+          "size": [
+            2048,
+            2048
+          ],
+          "count": 29
+        },
+        {
+          "size": [
+            2048,
+            1152
+          ],
+          "count": 28
+        },
+        {
+          "size": [
+            1360,
+            2048
+          ],
+          "count": 28
+        },
+        {
+          "size": [
+            1152,
+            2048
+          ],
+          "count": 28
+        }
+      ],
+      "brightness": {
+        "dark": 0,
+        "normal": 199,
+        "bright": 1
+      },
+      "objects_per_image_mean": 14.8,
+      "objects_per_image_max": 61,
+      "classes": {
+        "helmet": {
+          "instances": 294,
+          "images": 146,
+          "small": 160,
+          "medium": 132,
+          "large": 2
+        },
+        "gloves": {
+          "instances": 381,
+          "images": 136,
+          "small": 245,
+          "medium": 136,
+          "large": 0
+        },
+        "vest": {
+          "instances": 340,
+          "images": 157,
+          "small": 154,
+          "medium": 75,
+          "large": 111
+        },
+        "boots": {
+          "instances": 481,
+          "images": 155,
+          "small": 254,
+          "medium": 227,
+          "large": 0
+        },
+        "goggles": {
+          "instances": 139,
+          "images": 102,
+          "small": 83,
+          "medium": 56,
+          "large": 0
+        },
+        "Person": {
+          "instances": 481,
+          "images": 200,
+          "small": 145,
+          "medium": 114,
+          "large": 222
+        },
+        "no_helmet": {
+          "instances": 179,
+          "images": 91,
+          "small": 111,
+          "medium": 65,
+          "large": 3
+        },
+        "no_goggle": {
+          "instances": 82,
+          "images": 56,
+          "small": 82,
+          "medium": 0,
+          "large": 0
+        },
+        "no_gloves": {
+          "instances": 203,
+          "images": 94,
+          "small": 162,
+          "medium": 41,
+          "large": 0
+        },
+        "no_boots": {
+          "instances": 178,
+          "images": 71,
+          "small": 110,
+          "medium": 68,
+          "large": 0
+        },
+        "forklift": {
+          "instances": 73,
+          "images": 46,
+          "small": 4,
+          "medium": 25,
+          "large": 44
+        },
+        "no_vest": {
+          "instances": 130,
+          "images": 84,
+          "small": 53,
+          "medium": 34,
+          "large": 43
+        }
+      },
+      "cooccurrence": {
+        "Person+boots": 155,
+        "Person+forklift": 46,
+        "Person+gloves": 136,
+        "Person+goggles": 102,
+        "Person+helmet": 146,
+        "Person+no_boots": 71,
+        "Person+no_gloves": 94,
+        "Person+no_goggle": 56,
+        "Person+no_helmet": 91,
+        "Person+no_vest": 84,
+        "Person+vest": 157,
+        "boots+forklift": 34,
+        "boots+gloves": 119,
+        "boots+goggles": 82,
+        "boots+helmet": 120,
+        "boots+no_boots": 32,
+        "boots+no_gloves": 68,
+        "boots+no_goggle": 43,
+        "boots+no_helmet": 58,
+        "boots+no_vest": 59,
+        "boots+vest": 128,
+        "forklift+gloves": 30,
+        "forklift+goggles": 22,
+        "forklift+helmet": 31,
+        "forklift+no_boots": 17,
+        "forklift+no_gloves": 22,
+        "forklift+no_goggle": 14,
+        "forklift+no_helmet": 22,
+        "forklift+no_vest": 19,
+        "forklift+vest": 40,
+        "gloves+goggles": 91,
+        "gloves+helmet": 115,
+        "gloves+no_boots": 45,
+        "gloves+no_gloves": 37,
+        "gloves+no_goggle": 28,
+        "gloves+no_helmet": 48,
+        "gloves+no_vest": 42,
+        "gloves+vest": 120,
+        "goggles+helmet": 76,
+        "goggles+no_boots": 36,
+        "goggles+no_gloves": 24,
+        "goggles+no_goggle": 3,
+        "goggles+no_helmet": 41,
+        "goggles+no_vest": 22,
+        "goggles+vest": 88,
+        "helmet+no_boots": 46,
+        "helmet+no_gloves": 59,
+        "helmet+no_goggle": 37,
+        "helmet+no_helmet": 37,
+        "helmet+no_vest": 58,
+        "helmet+vest": 122,
+        "no_boots+no_gloves": 43,
+        "no_boots+no_goggle": 23,
+        "no_boots+no_helmet": 46,
+        "no_boots+no_vest": 30,
+        "no_boots+vest": 55,
+        "no_gloves+no_goggle": 45,
+        "no_gloves+no_helmet": 58,
+        "no_gloves+no_vest": 55,
+        "no_gloves+vest": 67,
+        "no_goggle+no_helmet": 28,
+        "no_goggle+no_vest": 43,
+        "no_goggle+vest": 29,
+        "no_helmet+no_vest": 48,
+        "no_helmet+vest": 70,
+        "no_vest+vest": 41
+      }
+    }
+  }
+}

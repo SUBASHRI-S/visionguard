@@ -1,0 +1,30 @@
+{
+  "clips": [
+    {
+      "clip_id": "example_own_01",
+      "path": "datasets/raw/real_clips/example_own_01.mp4",
+      "camera_id": "cam1",
+      "fps": 25,
+      "duration_s": 40,
+      "subset": "final",
+      "source_type": "own_recording",
+      "consent_obtained": true,
+      "licence": "own work",
+      "incidents": [
+        {"rule_id": "no_helmet", "start_s": 3.0, "end_s": 9.5, "note": "worker at left, helmet in hand"},
+        {"rule_id": "zone_intrusion", "start_s": 20.0, "end_s": 26.0, "ambiguous": true, "note": "feet hidden behind crate"}
+      ]
+    },
+    {
+      "clip_id": "example_public_02",
+      "path": "datasets/raw/real_clips/example_public_02.mp4",
+      "camera_id": "cam2",
+      "fps": 30,
+      "subset": "tune",
+      "source_type": "third_party",
+      "url": "https://example.org/replace-with-real-source",
+      "licence": "CC BY 4.0",
+      "incidents": []
+    }
+  ]
+}

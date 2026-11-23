@@ -3,7 +3,10 @@ __pycache__/
 *.pt
 *.onnx
 datasets/raw/
+datasets/processed/
 mlruns/
+runs/
 node_modules/
 .env
+.pytest_cache/
 *.jpg
