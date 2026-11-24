@@ -27,7 +27,8 @@ VisionGuard watches workplace camera feeds, detects people, helmets, vests and v
 | Dataset analysis, leakage-safe split, class profiles, version manifest, replay-clip schema (+ 41 tests) | Done. Run on the real dataset: `core` = `d1dc2ab4d1a9`, `core_missing` = `b1e02ace5049` |
 | Real-footage protocol and replay-clip labels | Protocol written; clips not yet collected |
 | Training pipeline: validated YAML config, dataset-version check, dataset rebuild from manifest, train script, MLflow logging (+ tests) | Written. Pipeline verified end to end on a **tiny synthetic dataset on CPU** (plumbing only, metrics meaningless). **No real training run yet** |
-| Real baseline training on a cloud GPU, evaluation on the test set | Not started |
+| Baseline training `n_core_baseline` (YOLO11n, core, dataset `d1dc2ab4d1a9`) on a Kaggle T4, logged to MLflow | Done. Validation split: mAP50 0.921, mAP50-95 0.730 (validation was used to pick `best.pt`, so these are slightly optimistic) |
+| Evaluation script with one-time test-split guard (`scripts/evaluate.py`, + tests) | Written; plumbing checked on synthetic data only. **Test-split evaluation of the baseline not yet run** |
 | Tracking, safety rules, incidents | Not started |
 | API, frontend, Docker, CI/CD | Not started |
 

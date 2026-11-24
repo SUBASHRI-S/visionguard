@@ -1,0 +1,77 @@
+{
+  "run_name": "n_core_baseline",
+  "split": "val",
+  "profile": "core",
+  "dataset_version": "d1dc2ab4d1a9",
+  "class_names": [
+    "person",
+    "helmet",
+    "vest",
+    "forklift"
+  ],
+  "images": 160,
+  "instances": 887,
+  "weights": "runs\\n_core_baseline\\weights\\best.pt",
+  "weights_sha256": "cce0167847927ef35c83ddd08be755badb32188dd731d5b8f0173a8c36294304",
+  "overall": {
+    "precision": 0.9651645227008883,
+    "recall": 0.8709552053450013,
+    "map50": 0.9209942120579814,
+    "map50_95": 0.7284315600952376
+  },
+  "per_class": {
+    "person": {
+      "instances": 338,
+      "precision": 0.981088241618852,
+      "recall": 0.9208980693441758,
+      "map50": 0.9667645764311342,
+      "map50_95": 0.8224039068608379
+    },
+    "helmet": {
+      "instances": 236,
+      "precision": 0.9752162877586671,
+      "recall": 0.7966101694915254,
+      "map50": 0.8695871585597079,
+      "map50_95": 0.6987140795525981
+    },
+    "vest": {
+      "instances": 254,
+      "precision": 0.9740010151537654,
+      "recall": 0.8849566503409139,
+      "map50": 0.9363982809538738,
+      "map50_95": 0.7697969135563779
+    },
+    "forklift": {
+      "instances": 59,
+      "precision": 0.9303525462722689,
+      "recall": 0.8813559322033898,
+      "map50": 0.9112268322872096,
+      "map50_95": 0.6228113404111363
+    }
+  },
+  "speed_ms": {
+    "preprocess": 2.5485368751105852,
+    "inference": 35.26161874906393,
+    "postprocess": 0.6333875004202127
+  },
+  "settings": {
+    "imgsz": 640,
+    "batch": 16,
+    "conf": 0.001,
+    "iou": 0.6
+  },
+  "device": "cpu",
+  "git": {
+    "commit": "90af641da713c064c39b05683c15c5a3dcb3ccd7",
+    "dirty": true
+  },
+  "environment": {
+    "python": "3.14.6",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "torch": "2.15.0+cpu",
+    "ultralytics": "8.4.216",
+    "cuda_available": false,
+    "gpu_name": null
+  },
+  "evaluated_at": "2026-11-24T09:04:44+00:00"
+}
