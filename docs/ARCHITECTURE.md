@@ -24,9 +24,10 @@ VisionGuard watches workplace camera feeds, detects people, helmets, vests and v
 | `Detector` wrapper (pretrained YOLO) + 5 tests | Done |
 | Dataset validator + 8 tests | Done (13 tests passing in the repo) |
 | PPE dataset selected and licence checked (Ultralytics Construction-PPE, CC BY 4.0) | Done, see `datasets/README.md` |
-| Dataset analysis, leakage-safe split, class profiles, version manifest, replay-clip schema (+ 41 tests) | Written and tested on synthetic data only; **not yet run on the real dataset** |
+| Dataset analysis, leakage-safe split, class profiles, version manifest, replay-clip schema (+ 41 tests) | Done. Run on the real dataset: `core` = `d1dc2ab4d1a9`, `core_missing` = `b1e02ace5049` |
 | Real-footage protocol and replay-clip labels | Protocol written; clips not yet collected |
-| Training, evaluation, MLflow | Not started |
+| Training pipeline: validated YAML config, dataset-version check, dataset rebuild from manifest, train script, MLflow logging (+ tests) | Written. Pipeline verified end to end on a **tiny synthetic dataset on CPU** (plumbing only, metrics meaningless). **No real training run yet** |
+| Real baseline training on a cloud GPU, evaluation on the test set | Not started |
 | Tracking, safety rules, incidents | Not started |
 | API, frontend, Docker, CI/CD | Not started |
 

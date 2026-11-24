@@ -10,6 +10,7 @@ VisionGuard is a computer vision system for workplace safety. It detects people,
 - Dataset validator for YOLO-format data (`datasets/validate.py`)
 - Dataset tooling: analysis, leakage-safe train/val/test split, class profiles and a versioned manifest (`datasets/`), tested on synthetic data
 - Schema and validation for hand-labelled real-footage clips (`evaluation/clip_labels.py`)
+- Training pipeline: YAML configs, dataset-version check, MLflow logging, dataset rebuild for cloud notebooks (`training/`, `scripts/train.py`). Plumbing verified on a tiny synthetic dataset; real baseline results are not available yet
 
 ## Planned capabilities
 
@@ -26,6 +27,7 @@ VisionGuard is a computer vision system for workplace safety. It detects people,
 python -m venv .venv
 .venv\Scripts\activate
 python -m pip install -r requirements-lock.txt
+python -m pip install -r requirements-train.txt
 python -m pytest -q
 ```
 
@@ -33,7 +35,7 @@ python -m pytest -q
 
 ```
 python -m scripts.analyze_dataset
-python -m scripts.make_split --profile core --source-sha256 <hash of the downloaded zip>
+python -m scripts.make_split --profile core --source-sha256 $hash
 ```
 
 Full steps, licence and attribution: [datasets/README.md](datasets/README.md).

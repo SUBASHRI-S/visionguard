@@ -1,0 +1,17 @@
+# Same model with the extra 'missing PPE' classes (no_helmet, no_vest) to compare against
+# inferring violations from absence (decision D1).
+name: n_core_missing
+model: yolo11n.pt
+dataset:
+  profile: core_missing
+  version: b1e02ace5049
+train:
+  epochs: 100
+  imgsz: 640
+  batch: 16
+  patience: 30
+  workers: 2
+  seed: 42
+mlflow:
+  tracking_uri: sqlite:///mlflow.db
+  experiment: visionguard

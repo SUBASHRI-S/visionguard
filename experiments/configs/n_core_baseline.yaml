@@ -1,0 +1,16 @@
+# Baseline: YOLO11n, core classes (person, helmet, vest, forklift). Run on a GPU.
+name: n_core_baseline
+model: yolo11n.pt
+dataset:
+  profile: core
+  version: d1dc2ab4d1a9
+train:
+  epochs: 100
+  imgsz: 640
+  batch: 16
+  patience: 30
+  workers: 2
+  seed: 42
+mlflow:
+  tracking_uri: sqlite:///mlflow.db
+  experiment: visionguard
