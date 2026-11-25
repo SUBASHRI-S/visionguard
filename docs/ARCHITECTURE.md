@@ -28,9 +28,11 @@ VisionGuard watches workplace camera feeds, detects people, helmets, vests and v
 | Real-footage protocol and replay-clip labels | Protocol written; clips not yet collected |
 | Training pipeline: validated YAML config, dataset-version check, dataset rebuild from manifest, train script, MLflow logging (+ tests) | Written. Pipeline verified end to end on a **tiny synthetic dataset on CPU** (plumbing only, metrics meaningless). **No real training run yet** |
 | Baseline training `n_core_baseline` (YOLO11n, core, dataset `d1dc2ab4d1a9`) on a Kaggle T4, logged to MLflow | Done. Validation split: mAP50 0.921, mAP50-95 0.730 (validation was used to pick `best.pt`, so these are slightly optimistic) |
-| Evaluation script with one-time test-split guard (`scripts/evaluate.py`, + tests) | Written; plumbing checked on synthetic data only. **Test-split evaluation of the baseline not yet run** |
-| Error analysis on the validation split (`scripts/error_analysis.py`, + tests) | Written; logic tested with unit and mutation checks, pipeline run on synthetic data only. **Not yet run on the real validation split** |
-| Tracking, safety rules, incidents | Not started |
+| Evaluation script with one-time test-split guard (`scripts/evaluate.py`, + tests) | Done. Test split evaluated once for the baseline (mAP50-95 0.676) and once for `n_core_imgsz960` (0.704) |
+| Error analysis on the validation split (`scripts/error_analysis.py`, + tests) | Done on the real validation split for both runs; inference uses each run's training image size |
+| Experiment `n_core_imgsz960` (imgsz 960 vs 640) | Done; adopted as the working model. See `docs/EXPERIMENTS.md` for numbers and limits (single seed, slower inference not yet benchmarked) |
+| PPE association, zones, proximity, four rules and engine (`safety/`, + 82 tests, with deliberate-bug checks) | Done on fabricated detections. **Thresholds are untuned placeholders**; not yet run on real model output or real clips |
+| Tracking, incidents | Not started |
 | API, frontend, Docker, CI/CD | Not started |
 
 ## 3. Key decisions (decision log)
@@ -291,4 +293,6 @@ M7 can proceed in parallel with M2 because rules run on fabricated detections.
 - The only vehicle class in the training data is `forklift`; cars, trucks and other vehicles are not detected by the fine-tuned model.
 - Part of the training data is generated imagery, and generated images cannot be separated from real ones, so dataset metrics may overstate real-world performance.
 - Dataset software licence: the dataset is CC BY 4.0, but the Ultralytics code is AGPL-3.0. That is fine for a portfolio; commercial use needs a licence review.
+- Person-in-forklift (operator) detection is image-space: someone standing in front of a forklift can be mistaken for its operator and skipped by the proximity rule.
+- Safety thresholds (head region, minimum person size, warn ratio) are placeholders until tuned on validation detections and real clips.
 - The system supports human review. It is not a replacement for safety procedures.
