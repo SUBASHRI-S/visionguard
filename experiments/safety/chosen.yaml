@@ -1,0 +1,5 @@
+# Safety settings chosen on the VALIDATION split (see docs/EXPERIMENTS.md, "Safety stage").
+# Only values that were actually swept are changed from the placeholder defaults.
+# Everything else in safety/config.py is still an untuned placeholder.
+ppe:
+  helmet_min_confidence: 0.60

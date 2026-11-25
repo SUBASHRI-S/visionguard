@@ -166,3 +166,44 @@ def test_config_rejects_bad_values(bad):
 def test_box_rejects_inverted_coordinates():
     with pytest.raises(ValueError):
         Box(10, 10, 5, 20)
+
+
+def test_status_records_which_detections_were_matched():
+    (status,) = run(PERSON, HELMET_ON_HEAD, VEST_ON_TORSO)
+    assert status.helmet_detection == HELMET_ON_HEAD
+    assert status.vest_detection == VEST_ON_TORSO
+    (bare,) = run(PERSON)
+    assert bare.helmet_detection is None and bare.vest_detection is None
+
+
+def test_weak_helmet_match_becomes_unknown_when_a_minimum_is_set():
+    weak = det("helmet", 430, 205, 470, 240, conf=0.5)
+    config = PPEConfig(helmet_min_confidence=0.7)
+    (status,) = run(PERSON, weak, VEST_ON_TORSO, config=config)
+    assert status.helmet == "unknown"
+    assert any("helmet detection weak" in r for r in status.reasons)
+    assert status.helmet_detection == weak  # the evidence is still recorded
+    assert status.vest == "yes"
+
+
+def test_strong_helmet_match_stays_yes_with_a_minimum_set():
+    strong = det("helmet", 430, 205, 470, 240, conf=0.85)
+    (status,) = run(PERSON, strong, config=PPEConfig(helmet_min_confidence=0.7))
+    assert status.helmet == "yes"
+
+
+def test_minimum_confidence_is_off_by_default():
+    weak = det("helmet", 430, 205, 470, 240, conf=0.2)
+    (status,) = run(PERSON, weak)
+    assert status.helmet == "yes"
+
+
+def test_weak_vest_match_becomes_unknown_when_a_minimum_is_set():
+    weak = det("vest", 410, 270, 490, 380, conf=0.4)
+    (status,) = run(PERSON, weak, config=PPEConfig(vest_min_confidence=0.6))
+    assert status.vest == "unknown"
+
+
+def test_min_confidence_validated():
+    with pytest.raises(SafetyConfigError):
+        PPEConfig(helmet_min_confidence=1.5)

@@ -1,0 +1,3 @@
+# Sweep value for the weak-helmet rule. Chosen on the validation split only.
+ppe:
+  helmet_min_confidence: 0.50

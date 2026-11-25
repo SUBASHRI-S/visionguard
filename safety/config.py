@@ -28,6 +28,8 @@ class PPEConfig:
     edge_margin_px: float = 5.0          # a box this close to an edge may be cut off
     max_occlusion: float = 0.5           # share of a person covered by another person
     operator_containment: float = 0.7    # share of a person inside a forklift box to call them operator
+    helmet_min_confidence: float = 0.0   # matched helmet weaker than this -> 'unknown' (0 = off)
+    vest_min_confidence: float = 0.0     # same for vests
 
     def __post_init__(self) -> None:
         errors: list[str] = []
@@ -43,6 +45,7 @@ class PPEConfig:
             "head_region_fraction", "torso_top_fraction", "torso_bottom_fraction",
             "vest_overlap_threshold", "helmet_min_width_ratio", "helmet_max_width_ratio",
             "min_person_confidence", "max_occlusion", "operator_containment",
+            "helmet_min_confidence", "vest_min_confidence",
         ):
             unit(name)
         unit("min_person_height_px", 0.0, 10000.0)

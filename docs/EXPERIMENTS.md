@@ -52,3 +52,49 @@ Test per class for the 960 run (mAP50-95): person 0.789, helmet 0.728, vest 0.76
   `experiments/configs/n_core_missing.yaml`).
 - Consider an error category for badly aligned boxes (a miss paired with a nearby false alarm).
 - Helmet false alarms increased at 960; inspect `evaluation/error_analysis/n_core_imgsz960_val`.
+
+## Safety stage: engine on real detections (n_core_imgsz960, validation split)
+
+Question: how often does the safety engine reach the same PPE conclusion from the model's
+detections as it does from the ground-truth labels? (`scripts/safety_check.py`.)
+Limit: "truth" is the labels run through the same association rules, so this measures what
+**detector errors** cost the safety logic, not whether the rules themselves are right.
+All safety thresholds other than the ones below are untuned placeholders.
+
+At detector confidence 0.35 with the placeholder rules (160 images, 324 matched people):
+
+| Item | Real violations flagged | Silently called compliant | Compliant people falsely flagged |
+|---|---|---|---|
+| helmet (79 / 228 people) | 68 (86%) | 8 (10%) | 7 (3%) |
+| vest (57 / 251 people) | 50 (88%) | 2 (4%) | 9 (4%) |
+
+About 90% of false violations came from the detector never finding the helmet or vest
+(helmet 6 of 7, vest 8 of 9); the association rules rejected a found item only once each.
+
+### Detector confidence sweep (helmet, same rules)
+
+| Confidence | Violations flagged | Silent misses | Compliant falsely flagged |
+|---|---|---|---|
+| 0.35 | 68 | 8 | 7 |
+| 0.25 | 66 | 10 | 5 |
+| 0.20 | 64 | 12 | 5 |
+
+Lowering the threshold removed about two false alarms per step but added about two silent
+misses, which is the worse error. 0.35 was kept.
+
+### Weak-helmet cutoff
+
+Wrongly accepted helmets had lower confidence (median 0.59, n=8) than correctly accepted ones
+(median 0.91, n=210). A matched helmet weaker than a cutoff now gives `unknown` instead of `yes`.
+
+| helmet_min_confidence | Silent misses | Compliant made unknown | Compliant still yes |
+|---|---|---|---|
+| off | 8 | 11 | 210 |
+| 0.50 | 6 | 15 | 206 |
+| **0.60** | **3** | 21 | 200 |
+| 0.70 | 3 | 27 | 194 |
+| 0.80 | 2 | 48 | 173 |
+
+0.60 chosen (`experiments/safety/chosen.yaml`). The cutoff was selected on 8 silent-miss cases, so
+it may be partly luck; the highest wrongly accepted helmet had confidence 0.86, so no cutoff
+removes all of them. The vest had only 2 wrong acceptances, so no vest cutoff was set.

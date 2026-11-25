@@ -79,3 +79,5 @@ class PPEStatus:
     vest: Answer
     is_operator: bool = False
     reasons: tuple[str, ...] = ()
+    helmet_detection: Detection | None = None  # the detection matched as this person's helmet
+    vest_detection: Detection | None = None  # the detection matched as this person's vest

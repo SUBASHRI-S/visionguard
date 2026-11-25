@@ -7,7 +7,8 @@ helmet at the person's head. Three answers are possible, and only 'no' can raise
     no       nothing matched AND we could see the relevant body part clearly
     unknown  nothing matched but we cannot be sure (tiny, cut off, hidden, low confidence)
 
-Positive evidence always wins: a matched helmet is 'yes' even for a small person.
+Positive evidence wins: a matched helmet is 'yes' even for a small person, unless the match is
+weaker than the configured minimum confidence, in which case the answer is 'unknown'.
 """
 from safety.config import PPEConfig
 from safety.contracts import FORKLIFT, HELMET, PERSON, VEST, Box, Detection, PPEStatus
@@ -85,6 +86,28 @@ def _is_operator(person: Box, forklifts: list[Detection], config: PPEConfig) -> 
     )
 
 
+def match_ppe(
+    persons: list[Detection],
+    helmets: list[Detection],
+    vests: list[Detection],
+    config: PPEConfig,
+) -> tuple[dict[int, int], dict[int, int]]:
+    """Which helmet and which vest (by list index) belongs to which person (by list index)."""
+    helmet_scores = {
+        (pi, hi): s
+        for pi, p in enumerate(persons)
+        for hi, h in enumerate(helmets)
+        if (s := _helmet_score(p.box, h, config)) is not None
+    }
+    vest_scores = {
+        (pi, vi): s
+        for pi, p in enumerate(persons)
+        for vi, v in enumerate(vests)
+        if (s := _vest_score(p.box, v, config)) is not None
+    }
+    return _assign(helmet_scores), _assign(vest_scores)
+
+
 def associate(
     detections: list[Detection],
     frame_width: int,
@@ -99,20 +122,7 @@ def associate(
     forklifts = [d for d in detections if d.class_name == FORKLIFT]
     person_boxes = [p.box for p in persons]
 
-    helmet_scores = {
-        (pi, hi): s
-        for pi, p in enumerate(persons)
-        for hi, h in enumerate(helmets)
-        if (s := _helmet_score(p.box, h, config)) is not None
-    }
-    vest_scores = {
-        (pi, vi): s
-        for pi, p in enumerate(persons)
-        for vi, v in enumerate(vests)
-        if (s := _vest_score(p.box, v, config)) is not None
-    }
-    helmet_of = _assign(helmet_scores)
-    vest_of = _assign(vest_scores)
+    helmet_of, vest_of = match_ppe(persons, helmets, vests, config)
 
     statuses: list[PPEStatus] = []
     for index, person in enumerate(persons):
@@ -133,11 +143,19 @@ def associate(
             vest_reasons.append("torso may be cut off by the side of the frame")
 
         if index in helmet_of:
-            helmet, helmet_reasons = "yes", []
+            found = helmets[helmet_of[index]]
+            if found.confidence < config.helmet_min_confidence:
+                helmet, helmet_reasons = "unknown", [f"helmet detection weak ({found.confidence:.2f})"]
+            else:
+                helmet, helmet_reasons = "yes", []
         else:
             helmet = "unknown" if helmet_reasons else "no"
         if index in vest_of:
-            vest, vest_reasons = "yes", []
+            found = vests[vest_of[index]]
+            if found.confidence < config.vest_min_confidence:
+                vest, vest_reasons = "unknown", [f"vest detection weak ({found.confidence:.2f})"]
+            else:
+                vest, vest_reasons = "yes", []
         else:
             vest = "unknown" if vest_reasons else "no"
 
@@ -148,6 +166,8 @@ def associate(
                 helmet=helmet,
                 vest=vest,
                 is_operator=_is_operator(box, forklifts, config),
+                helmet_detection=helmets[helmet_of[index]] if index in helmet_of else None,
+                vest_detection=vests[vest_of[index]] if index in vest_of else None,
                 reasons=tuple(dict.fromkeys(helmet_reasons + vest_reasons)),
             )
         )
