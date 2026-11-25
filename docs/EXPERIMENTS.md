@@ -98,3 +98,22 @@ Wrongly accepted helmets had lower confidence (median 0.59, n=8) than correctly 
 0.60 chosen (`experiments/safety/chosen.yaml`). The cutoff was selected on 8 silent-miss cases, so
 it may be partly luck; the highest wrongly accepted helmet had confidence 0.86, so no cutoff
 removes all of them. The vest had only 2 wrong acceptances, so no vest cutoff was set.
+
+### Test split, evaluated once (`experiments/safety/chosen.yaml`, detector confidence 0.35)
+
+200 images. Run once after the settings above were fixed on validation.
+
+| Item | Real violations flagged | Silently called compliant | Made unknown | Person not detected | Compliant falsely flagged |
+|---|---|---|---|---|---|
+| helmet (151 / 275 people) | 127 (84%) | 6 (4%) | 10 (7%) | 8 (5%) | 11 (4%) |
+| vest (98 / 334 people) | 76 (78%) | 8 (8%) | 4 (4%) | 10 (10%) | 5 (1%) |
+
+- The helmet results match validation closely (84% vs 86% flagged, 4% silent misses), so the
+  weak-helmet cutoff chosen on validation did not just fit validation.
+- Vest is worse than on validation (78% vs 88% flagged): more whole people were not detected
+  (10% of vest violators) and silent misses doubled (8% vs 4%).
+- Wrongly accepted vests on test were weaker (median confidence 0.61, n=8) than correct ones (0.89),
+  like helmets. On validation only 2 wrong vests existed and they were confident (0.88). This is a
+  **hypothesis, not adopted**: tuning a vest cutoff on the test split would spend the clean check.
+  To be checked on the real-footage set (M11).
+- Counts are per person per image, not incidents. Temporal logic (M6/M8) is not applied yet.

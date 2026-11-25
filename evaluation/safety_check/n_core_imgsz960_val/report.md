@@ -21,6 +21,20 @@
 | yes (compliant) | 251 | 234 (93%) | 9 (4%) | 6 (2%) | 2 (1%) |
 | unknown (unclear in the labels) | 30 | 3 (10%) | 1 (3%) | 17 (57%) | 9 (30%) |
 
+## Why compliant people were called violators
+
+| Item | Detector never found one | Found, but the rules rejected it |
+|---|---|---|
+| helmet | 6 | 1 |
+| vest | 8 | 1 |
+
+## Confidence of the matched item (min / median / max)
+
+| Item | Wrongly accepted (n) | Correctly accepted (n) |
+|---|---|---|
+| helmet | 0.40 / 0.59 / 0.86 (8) | 0.37 / 0.91 / 0.96 (210) |
+| vest | 0.39 / 0.88 / 0.88 (2) | 0.42 / 0.91 / 0.95 (234) |
+
 ## Events the engine raised on the model's detections
 
 | Rule | Violations | Uncertain |

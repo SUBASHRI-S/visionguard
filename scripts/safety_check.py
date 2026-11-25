@@ -14,7 +14,10 @@ import cv2
 import yaml
 
 from evaluation.error_analysis import parse_labels
-from evaluation.safety_check import ImageComparison, compare_image, summarize, to_markdown
+from evaluation.safety_check import (
+    ImageComparison, compare_image, confidence_profile, false_violation_causes, summarize,
+    to_markdown,
+)
 from safety.contracts import Box, Detection, PPEStatus
 from safety.engine import SafetyEngine
 from training.dataset_check import DatasetError, check_dataset
@@ -23,8 +26,18 @@ from ultralytics import YOLO
 COLOURS = {"all_ok": (0, 160, 0), "violation": (0, 0, 220), "unknown": (0, 200, 230)}
 
 
-def draw_statuses(image, statuses: list[PPEStatus]):
+PPE_COLOURS = {"helmet": (255, 120, 0), "vest": (200, 0, 200)}  # blue-ish and magenta (BGR)
+
+
+def draw_statuses(image, statuses: list[PPEStatus], detections: list[Detection] | None = None):
     out = image.copy()
+    for d in detections or []:
+        if d.class_name in PPE_COLOURS:
+            b = d.box
+            colour = PPE_COLOURS[d.class_name]
+            cv2.rectangle(out, (int(b.x1), int(b.y1)), (int(b.x2), int(b.y2)), colour, 1)
+            cv2.putText(out, f"{d.class_name[0]}{d.confidence:.2f}", (int(b.x1), int(b.y2) + 12),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, colour, 1)
     for s in statuses:
         b = s.person.box
         if "no" in (s.helmet, s.vest):
@@ -73,6 +86,7 @@ def main() -> None:
 
     comparisons: dict[str, ImageComparison] = {}
     pred_statuses: dict[str, list[PPEStatus]] = {}
+    pred_detections: dict[str, list[Detection]] = {}
     events: dict[str, Counter] = defaultdict(Counter)
     for path in images:
         image = cv2.imread(str(path))
@@ -96,22 +110,29 @@ def main() -> None:
             events[event.rule_id][event.outcome] += 1
         comparisons[path.name] = compare_image(list(truth_ctx.statuses), list(pred_ctx.statuses), args.iou)
         pred_statuses[path.name] = list(pred_ctx.statuses)
+        pred_detections[path.name] = pred_dets
 
     summary = summarize(list(comparisons.values()))
     meta = {"run_name": config["name"], "split": args.split, "imgsz": imgsz,
-            "dataset_version": config["dataset_version"], "conf": args.conf, "iou": args.iou}
+            "dataset_version": config["dataset_version"], "conf": args.conf, "iou": args.iou,
+            "safety_config": str(args.safety_config) if args.safety_config else "placeholder defaults"}
     out_dir = args.out / f"{config['name']}_{args.split}"
     (out_dir / "images").mkdir(parents=True, exist_ok=True)
     events_plain = {rule: dict(counts) for rule, counts in events.items()}
-    (out_dir / "summary.json").write_text(json.dumps({"meta": meta, **summary, "events": events_plain}, indent=2))
-    report = to_markdown(summary, meta, events_plain)
+    causes = false_violation_causes(comparisons, pred_detections)
+    profile = confidence_profile(comparisons)
+    payload = {"meta": meta, **summary, "events": events_plain, "false_violation_causes": causes,
+               "confidence_profile": profile}
+    (out_dir / "summary.json").write_text(json.dumps(payload, indent=2))
+    report = to_markdown(summary, meta, events_plain, causes, profile)
     (out_dir / "report.md").write_text(report)
 
     worst = sorted(comparisons.items(), key=lambda kv: kv[1].disagreements, reverse=True)
     for name, comparison in worst[: args.draw]:
         if comparison.disagreements == 0:
             break
-        picture = draw_statuses(cv2.imread(str(root / "images" / args.split / name)), pred_statuses[name])
+        source = cv2.imread(str(root / "images" / args.split / name))
+        picture = draw_statuses(source, pred_statuses[name], pred_detections[name])
         cv2.imwrite(str(out_dir / "images" / name), picture)
 
     print(report)
