@@ -13,7 +13,7 @@ import cv2
 from evaluation.error_analysis import (
     Prediction, analyze, draw_image, to_markdown, worst_images,
 )
-from inference.detector import Detector
+from ultralytics import YOLO
 from training.dataset_check import DatasetError, check_dataset
 
 
@@ -24,6 +24,8 @@ def main() -> None:
     parser.add_argument("--conf", type=float, default=0.25, help="confidence threshold")
     parser.add_argument("--iou", type=float, default=0.5, help="match threshold")
     parser.add_argument("--device", default="cpu")
+    parser.add_argument("--imgsz", type=int, default=None,
+                        help="inference size; default: the size the run was trained at")
     parser.add_argument("--draw", type=int, default=20, help="how many worst images to draw")
     parser.add_argument("--out", type=Path, default=Path("evaluation/error_analysis"))
     args = parser.parse_args()
@@ -42,21 +44,27 @@ def main() -> None:
 
     root = Path("datasets/processed") / config["dataset_profile"]
     images = sorted((root / "images" / args.split).iterdir())
-    detector = Detector(str(args.run / "weights" / "best.pt"), device=args.device)
+    imgsz = args.imgsz or config["train"]["imgsz"]
+    model = YOLO(str(args.run / "weights" / "best.pt"))
+    print(f"inference size: {imgsz}")
 
     def predict(path: Path):
         image = cv2.imread(str(path))
         height, width = image.shape[:2]
-        found = detector.predict(image, conf=args.conf)
+        result = model.predict(
+            image, conf=args.conf, imgsz=imgsz, device=args.device, verbose=False
+        )[0]
+        boxes = result.boxes
         return width, height, [
-            Prediction(d.class_id, d.confidence, (d.x1, d.y1, d.x2, d.y2)) for d in found
+            Prediction(int(c), float(s), tuple(float(v) for v in b))
+            for b, c, s in zip(boxes.xyxy.tolist(), boxes.cls.tolist(), boxes.conf.tolist())
         ]
 
     summary, matches = analyze(
         images, root / "labels" / args.split, predict, manifest["class_names"], args.iou
     )
     worst = worst_images(matches, limit=max(args.draw, 20))
-    meta = {"run_name": config["name"], "split": args.split,
+    meta = {"run_name": config["name"], "split": args.split, "imgsz": imgsz,
             "dataset_version": config["dataset_version"], "conf": args.conf, "iou": args.iou}
 
     out_dir = args.out / f"{config['name']}_{args.split}"
