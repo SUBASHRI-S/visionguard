@@ -113,3 +113,13 @@ def test_unreadable_image_is_reported_not_crashing(make_image, tmp_path):
 def test_invalid_val_fraction_raises(fraction):
     with pytest.raises(ValueError):
         make_split([], [], val_fraction=fraction)
+
+
+def test_unreadable_after_ultralytics_import(make_image, tmp_path):
+    """Importing ultralytics patches PIL.Image.open; a corrupt file must still be reported, not crash."""
+    import ultralytics  # noqa: F401  (the import itself is the point)
+    train = _train_images(make_image, tmp_path, count=10)
+    broken = tmp_path / "train" / "broken.jpg"
+    broken.write_bytes(b"not an image")
+    test = [make_image(tmp_path / "test" / "x.jpg", seed=999)]
+    assert make_split([*train, broken], test, seed=1).unreadable == [broken]

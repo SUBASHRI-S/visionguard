@@ -34,7 +34,7 @@ def _hash_all(paths: list[Path], unreadable: list[Path]) -> dict[Path, int]:
     for path in paths:
         try:
             hashes[path] = dhash(path)
-        except (OSError, ValueError):
+        except (OSError, ValueError, ImportError):  # see tests/test_split.py::test_unreadable_after_ultralytics_import
             unreadable.append(path)
     return hashes
 

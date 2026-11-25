@@ -33,7 +33,8 @@ VisionGuard watches workplace camera feeds, detects people, helmets, vests and v
 | Experiment `n_core_imgsz960` (imgsz 960 vs 640) | Done; adopted as the working model. See `docs/EXPERIMENTS.md` for numbers and limits (single seed, slower inference not yet benchmarked) |
 | PPE association, zones, proximity, four rules and engine (`safety/`, + 82 tests, with deliberate-bug checks) | Done on fabricated detections. **Thresholds are untuned placeholders**; not yet run on real model output or real clips |
 | Incident temporal logic (`incidents/temporal.py`, 31 tests, deliberate-bug checks): opens after N violating frames, closes after M clear frames or track loss, uncertain frames hold state | Done on fabricated event streams. **N, M and the timeouts are untuned placeholders** |
-| Tracker adapter (ByteTrack), incident persistence, evidence, alerts | Not started. `lap` 0.5.14 installs on the dev machine (Python 3.14) |
+| Tracker adapter (`trackers/person_tracker.py`, 26 tests, deliberate-bug checks): ByteTrack behind our own types, validated config, person-index to track-id map | Done on fabricated motion (moving people, gaps, newcomers, ID reuse, end-to-end into the incident logic). **Not yet measured on real video: ID switches and the `track_buffer` value are untested.** A new person is confirmed one frame late by design |
+| Video pipeline, incident persistence, evidence, alerts | Not started. `lap` 0.5.14 installs on the dev machine (Python 3.14) |
 | API, frontend, Docker, CI/CD | Not started |
 
 ## 3. Key decisions (decision log)
@@ -97,7 +98,7 @@ training/     config-driven training, MLflow logging, seeds
 evaluation/   detector metrics, error analysis, replay evaluation
 models/       registry metadata, export scripts (ONNX, OpenVINO)
 inference/    Detector interface, image/video/stream pipelines
-tracking/     tracker wrapper, track state
+trackers/     tracker wrapper (ByteTrack adapter), track state
 safety/       association.py, zones.py, rules/{ppe,zone,proximity}.py, engine.py, config.py
 incidents/    manager.py (lifecycle + dedup), evidence.py, alerts.py
 backend/      api/, services/, db/, workers/, core/ (config, logging, auth)

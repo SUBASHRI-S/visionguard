@@ -67,7 +67,7 @@ def _analyze_split(root, split, class_names, small, medium, dark_below, bright_a
             with Image.open(image_path) as image:
                 resolutions[image.size] += 1
                 level = _brightness(image)
-        except (OSError, ValueError):
+        except (OSError, ValueError, ImportError):  # ImportError: ultralytics patches PIL.Image.open
             unreadable.append(image_path.name)
             continue
         if level < dark_below:
