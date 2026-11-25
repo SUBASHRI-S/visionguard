@@ -32,7 +32,8 @@ VisionGuard watches workplace camera feeds, detects people, helmets, vests and v
 | Error analysis on the validation split (`scripts/error_analysis.py`, + tests) | Done on the real validation split for both runs; inference uses each run's training image size |
 | Experiment `n_core_imgsz960` (imgsz 960 vs 640) | Done; adopted as the working model. See `docs/EXPERIMENTS.md` for numbers and limits (single seed, slower inference not yet benchmarked) |
 | PPE association, zones, proximity, four rules and engine (`safety/`, + 82 tests, with deliberate-bug checks) | Done on fabricated detections. **Thresholds are untuned placeholders**; not yet run on real model output or real clips |
-| Tracking, incidents | Not started |
+| Incident temporal logic (`incidents/temporal.py`, 31 tests, deliberate-bug checks): opens after N violating frames, closes after M clear frames or track loss, uncertain frames hold state | Done on fabricated event streams. **N, M and the timeouts are untuned placeholders** |
+| Tracker adapter (ByteTrack), incident persistence, evidence, alerts | Not started. `lap` 0.5.14 installs on the dev machine (Python 3.14) |
 | API, frontend, Docker, CI/CD | Not started |
 
 ## 3. Key decisions (decision log)
@@ -142,6 +143,8 @@ per (rule, track):   idle --N consecutive violating frames--> open
                      open --M consecutive clear frames-->   closed
                      open --track lost > T seconds-->       closed (reason: track_lost)
 ```
+
+`uncertain` frames hold the state: they never count towards opening or closing, and a long run of them while idle cancels a half-built streak. Settings count processed frames, so scale them if frames are skipped.
 
 Deduplication key: `(camera_id, rule_id, track_id)`. While an incident is open, new events for that key only update its last-seen time. A track ID switch (tracker failure) can create a duplicate; this is a known limitation and is measured in replay evaluation.
 

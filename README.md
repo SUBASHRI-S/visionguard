@@ -28,6 +28,7 @@ python -m venv .venv
 .venv\Scripts\activate
 python -m pip install -r requirements-lock.txt
 python -m pip install -r requirements-train.txt
+python -m pip install -r requirements-tracking.txt
 python -m pytest -q
 ```
 
