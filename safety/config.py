@@ -68,3 +68,65 @@ class PPEConfig:
         if extra:
             raise SafetyConfigError([f"unknown ppe key(s) {extra}"])
         return cls(**data)
+
+
+def _check_ranges(obj: object, ranges: dict[str, tuple[float, float]]) -> None:
+    errors: list[str] = []
+    for name, (low, high) in ranges.items():
+        value = getattr(obj, name)
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            errors.append(f"{name} must be a number")
+        elif not low <= value <= high:
+            errors.append(f"{name} must be between {low} and {high}")
+    if errors:
+        raise SafetyConfigError(errors)
+
+
+def _from_mapping(cls: type, data: dict[str, Any] | None, label: str) -> Any:
+    data = data or {}
+    if not isinstance(data, dict):
+        raise SafetyConfigError([f"{label} config must be a mapping"])
+    extra = sorted(set(data) - {f.name for f in fields(cls)})
+    if extra:
+        raise SafetyConfigError([f"unknown {label} key(s) {extra}"])
+    return cls(**data)
+
+
+@dataclass(frozen=True)
+class ZoneConfig:
+    """When is a person's foot point trustworthy enough to decide 'inside' or 'outside'?"""
+
+    min_person_confidence: float = 0.40
+    edge_margin_px: float = 5.0  # feet this close to the bottom edge may be cut off
+
+    def __post_init__(self) -> None:
+        _check_ranges(self, {"min_person_confidence": (0, 1), "edge_margin_px": (0, 1000)})
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any] | None) -> "ZoneConfig":
+        return _from_mapping(cls, data, "zone")
+
+
+@dataclass(frozen=True)
+class ProximityConfig:
+    """Image-space person-to-forklift screening. PLACEHOLDER values, to be tuned on real clips."""
+
+    warn_ratio: float = 1.0  # warn when distance is below this many person-heights
+    min_person_confidence: float = 0.40
+    min_person_height_px: float = 80.0  # dividing by a tiny height makes the ratio noise
+    edge_margin_px: float = 5.0
+
+    def __post_init__(self) -> None:
+        _check_ranges(
+            self,
+            {
+                "warn_ratio": (0.01, 20),
+                "min_person_confidence": (0, 1),
+                "min_person_height_px": (0, 10000),
+                "edge_margin_px": (0, 1000),
+            },
+        )
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any] | None) -> "ProximityConfig":
+        return _from_mapping(cls, data, "proximity")
