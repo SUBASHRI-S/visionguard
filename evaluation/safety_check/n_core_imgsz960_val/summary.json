@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_name": "n_core_imgsz960",
+    "split": "val",
+    "imgsz": 960,
+    "dataset_version": "d1dc2ab4d1a9",
+    "conf": 0.35,
+    "iou": 0.5
+  },
+  "images": 160,
+  "persons_matched": 324,
+  "persons_missed": 14,
+  "persons_extra": 7,
+  "table": {
+    "helmet": {
+      "yes": {
+        "yes": 210,
+        "unknown": 11,
+        "no": 7
+      },
+      "no": {
+        "no": 68,
+        "yes": 8,
+        "person_missed": 3
+      },
+      "unknown": {
+        "unknown": 19,
+        "person_missed": 11,
+        "no": 1
+      }
+    },
+    "vest": {
+      "yes": {
+        "yes": 234,
+        "unknown": 6,
+        "person_missed": 2,
+        "no": 9
+      },
+      "no": {
+        "no": 50,
+        "unknown": 2,
+        "yes": 2,
+        "person_missed": 3
+      },
+      "unknown": {
+        "unknown": 17,
+        "person_missed": 9,
+        "yes": 3,
+        "no": 1
+      }
+    }
+  },
+  "events": {
+    "no_helmet": {
+      "violation": 79,
+      "uncertain": 34
+    },
+    "no_vest": {
+      "violation": 61,
+      "uncertain": 29
+    },
+    "forklift_proximity": {
+      "uncertain": 24,
+      "violation": 18
+    }
+  }
+}
