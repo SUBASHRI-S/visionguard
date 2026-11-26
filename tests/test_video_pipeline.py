@@ -283,3 +283,92 @@ def test_cli_reports_bad_start_cleanly(tmp_path):
     bad.write_text("open_after_frame: 3\n")
     with pytest.raises(SystemExit, match="cannot start"):
         main(common + ["--temporal-config", str(bad)])
+
+
+# ---------------------------------------------------------------- work area
+
+from safety.zones import Zone, ZoneError
+
+# the lower half of the frame: where the workers stand; the far background is outside
+LOWER_HALF = Zone("foreground", ((0.0, 0.5), (1.0, 0.5), (1.0, 1.0), (0.0, 1.0)))
+
+
+def make_area_pipeline(script, area=LOWER_HALF):
+    return VideoPipeline(
+        Scripted(script), SafetyEngine.from_config({"enabled_rules": ["no_helmet"]}), PersonTracker(),
+        IncidentTracker(TemporalConfig(open_after_frames=3, close_after_frames=4, track_lost_seconds=0.5)),
+        camera_id="cam", work_area=area,
+    )
+
+
+def far_person(x=900):          # feet at y=270 of 720 (37%): above the line, outside the area
+    return person(x=x, y=150, w=60, h=120)
+
+
+def near_person(x=100):         # feet at y=570 of 720 (79%): inside the area
+    return person(x=x, y=150, w=120, h=420)
+
+
+def test_person_outside_work_area_is_not_checked_but_is_reported():
+    pipeline = make_area_pipeline([[far_person()]] * 8)
+    results = run_frames(pipeline, 8)
+    assert all(not r.statuses and not r.events and not r.transitions for r in results)
+    last = results[-1]
+    assert len(last.outside_persons) == 1 and last.outside_persons[0][1] is not None
+
+
+def test_person_inside_work_area_is_checked():
+    results = run_frames(make_area_pipeline([[near_person()]] * 8), 8)
+    assert any(t.kind == "opened" for r in results for t in r.transitions)
+
+
+def test_track_ids_follow_the_right_person_when_one_is_outside():
+    """The outside person is listed first. Track ids must be renumbered for the people the engine sees."""
+    out, inn = far_person(), near_person()
+    pipeline = make_area_pipeline([[out, inn]] * 8)
+    results = run_frames(pipeline, 8)
+    outside_id = results[-1].outside_persons[0][1]
+    opened = [t for r in results for t in r.transitions if t.kind == "opened"]
+    assert len(opened) == 1 and opened[0].track_id != outside_id
+    assert results[-1].track_ids == {0: opened[0].track_id}
+
+
+def test_no_work_area_means_everyone_is_checked():
+    results = run_frames(make_area_pipeline([[far_person()]] * 8, area=None), 8)
+    assert results[-1].statuses and not results[-1].outside_persons
+
+
+def test_runner_counts_outside_frames_and_reports_them(tmp_path):
+    video = make_video(tmp_path / "clip.mp4", frames=10)
+    pipeline = make_area_pipeline([[Detection("person", 0.9, Box(200, 20, 240, 90))]] * 10)
+    summary = process_video(video, pipeline, tmp_path / "out", run_info={"work_area": "foreground"})
+    assert summary["outside_person_frames"] == 10 and summary["incidents"] == []
+    assert "outside the work area" in (tmp_path / "out" / "report.md").read_text()
+
+
+def test_report_shows_last_violation_time_separately_from_close_time(tmp_path):
+    video = make_video(tmp_path / "clip.mp4", frames=30, fps=10)
+    p = small_person()
+    script = [[p]] * 6 + [[]] * 24                      # leaves after 0.6 s
+    summary = process_video(video, make_pipeline(script, lost=0.5), tmp_path / "out")
+    (incident,) = summary["incidents"]
+    assert incident["last_violation_timestamp"] < incident["ended_timestamp"]
+    assert incident["last_violation_timestamp"] == pytest.approx(0.5)
+    assert "last violation" in (tmp_path / "out" / "report.md").read_text()
+
+
+def test_zone_file_loader(tmp_path):
+    from scripts.run_video import load_zone_file
+    good = tmp_path / "z.yaml"
+    good.write_text("work_area:\n  name: yard\n  polygon: [[0,0.5],[1,0.5],[1,1],[0,1]]\n"
+                    "zones:\n  - name: pit\n    polygon: [[0.1,0.1],[0.3,0.1],[0.3,0.3]]\n")
+    zones, area = load_zone_file(good)
+    assert [z.name for z in zones] == ["pit"] and area.name == "yard"
+    assert load_zone_file(None) == ([], None)
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("work_areas: {}\n")
+    with pytest.raises(ZoneError):
+        load_zone_file(bad)
+    bad.write_text("work_area:\n  name: x\n  polygon: [[0,0],[1,1]]\n")
+    with pytest.raises(ZoneError):
+        load_zone_file(bad)

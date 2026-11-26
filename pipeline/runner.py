@@ -80,6 +80,7 @@ def process_video(
         opened: dict[tuple, dict] = {}
         sums = {"detect": 0.0, "track": 0.0, "rules": 0.0}
         processed = 0
+        outside_frames = 0
         last_index, last_ts = 0, 0.0
         started = perf_counter()
 
@@ -104,6 +105,7 @@ def process_video(
                                            "started_frame": t.started_frame,
                                            "started_timestamp": t.started_timestamp, "severity": t.severity})
                     rec.update(ended_timestamp=t.timestamp, ended_frame=t.frame_index, reason=t.reason,
+                               last_violation_timestamp=t.event.timestamp,
                                violating_frames=t.violating_frames, uncertain_frames=t.uncertain_frames)
                     incident_rows.append(rec)
                 if annotated is not None:
@@ -125,6 +127,7 @@ def process_video(
                 processed += 1
                 last_index, last_ts = index, ts
                 all_events.extend(result.events)
+                outside_frames += len(result.outside_persons)
                 track_log.add(result)
                 for k in sums:
                     sums[k] += result.timings_ms[k]
@@ -160,6 +163,7 @@ def process_video(
         "timing_ms": {k: v / n for k, v in sums.items()},
         "incidents": sorted(incident_rows, key=lambda r: (r["started_frame"], r["rule_id"], r["track_id"])),
         "ignored_untracked_events": pipeline.incidents.ignored_untracked_events,
+        "outside_person_frames": outside_frames,
         "tracks": track_log.rows(), "untracked_person_frames": track_log.untracked_person_frames,
         "events_per_rule": count_events(all_events),
         **(run_info or {}),

@@ -27,7 +27,7 @@ from pipeline.detector import FrameDetector
 from safety.contracts import PERSON, Detection, PPEStatus
 from safety.engine import SafetyEngine
 from safety.events import Event
-from safety.zones import Zone
+from safety.zones import Zone, point_in_polygon
 from trackers import PersonTracker
 
 
@@ -37,10 +37,11 @@ class FrameResult:
     timestamp: float
     detections: tuple[Detection, ...]
     statuses: tuple[PPEStatus, ...]
-    track_ids: dict[int, int]  # person_index -> track id (confirmed tracks only)
+    track_ids: dict[int, int]  # person_index -> track id (confirmed tracks only); indexes into `statuses`
     events: tuple[Event, ...]
     transitions: tuple[Transition, ...]
     open_incidents: tuple[tuple[str, str, int], ...]  # (camera_id, rule_id, track_id) open after this frame
+    outside_persons: tuple[tuple[Detection, int | None], ...] = ()  # people outside the work area: (box, track id)
     timings_ms: dict[str, float] = field(default_factory=dict)
 
 
@@ -54,12 +55,16 @@ class VideoPipeline:
         *,
         camera_id: str,
         zones: Sequence[Zone] = (),
+        work_area: Zone | None = None,
     ) -> None:
         if not camera_id:
             raise ValueError("camera_id must not be empty")
         self.detector, self.engine, self.tracker, self.incidents = detector, engine, tracker, incidents
         self.camera_id = camera_id
         self.zones = tuple(zones)
+        # PPE is only required inside the work area. People outside it (passers-by, a road behind
+        # the site) are still tracked and drawn, but the safety rules never see them.
+        self.work_area = work_area
 
     def process_frame(self, frame: np.ndarray, frame_index: int, timestamp: float) -> FrameResult:
         if not isinstance(frame, np.ndarray) or frame.ndim != 3 or frame.shape[2] != 3 or frame.size == 0:
@@ -70,10 +75,19 @@ class VideoPipeline:
         detections = self.detector.detect(frame)
         t1 = perf_counter()
         persons = [d for d in detections if d.class_name == PERSON]
-        track_ids = self.tracker.update(persons)
+        all_track_ids = self.tracker.update(persons)
         t2 = perf_counter()
+        outside: list[tuple[Detection, int | None]] = []
+        if self.work_area is None:
+            engine_detections, track_ids = detections, all_track_ids
+        else:
+            kept = [i for i, p in enumerate(persons) if self._in_work_area(p, width, height)]
+            outside = [(p, all_track_ids.get(i)) for i, p in enumerate(persons) if i not in set(kept)]
+            # the engine numbers people in the order they appear, so renumber the track ids to match
+            track_ids = {new: all_track_ids[old] for new, old in enumerate(kept) if old in all_track_ids}
+            engine_detections = [d for d in detections if d.class_name != PERSON] + [persons[i] for i in kept]
         ctx = self.engine.build_context(
-            detections, camera_id=self.camera_id, frame_index=frame_index, timestamp=timestamp,
+            engine_detections, camera_id=self.camera_id, frame_index=frame_index, timestamp=timestamp,
             frame_width=width, frame_height=height, zones=self.zones, track_ids=track_ids,
         )
         events = self.engine.evaluate(ctx)
@@ -86,9 +100,13 @@ class VideoPipeline:
             frame_index=frame_index, timestamp=timestamp,
             detections=tuple(detections), statuses=ctx.statuses, track_ids=dict(track_ids),
             events=tuple(events), transitions=tuple(transitions),
-            open_incidents=tuple(sorted(self.incidents.open_keys)),
+            open_incidents=tuple(sorted(self.incidents.open_keys)), outside_persons=tuple(outside),
             timings_ms={"detect": (t1 - t0) * 1e3, "track": (t2 - t1) * 1e3, "rules": (t3 - t2) * 1e3},
         )
+
+    def _in_work_area(self, person: Detection, width: int, height: int) -> bool:
+        x, y = person.box.foot_point
+        return point_in_polygon(x / width, y / height, self.work_area.polygon)  # type: ignore[union-attr]
 
     def finish(self, frame_index: int, timestamp: float) -> list[Transition]:
         """End of stream: close everything still open."""

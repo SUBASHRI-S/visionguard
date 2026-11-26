@@ -1,0 +1,16 @@
+# Work area for the clip 67460-522170651_medium.mp4 (a fixed camera on a sand pile).
+# Polygons are fractions of the frame: x from the left, y from the top (0 to 1).
+#
+# The worker stands in the lower part of the frame. Passers-by and the people in the far
+# background are higher up, so the area starts 60% of the way down.
+#
+# HONEST NOTE: this was drawn by eye after looking at this same clip. It is camera set-up (like
+# telling the system where the site is), not a model setting, but it means results on this clip
+# say nothing about how well the system works on other cameras.
+work_area:
+  name: foreground work area
+  polygon:
+    - [0.0, 0.6]
+    - [1.0, 0.6]
+    - [1.0, 1.0]
+    - [0.0, 1.0]

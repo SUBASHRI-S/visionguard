@@ -47,7 +47,7 @@ Full steps, licence and attribution: [datasets/README.md](datasets/README.md).
 python -m scripts.run_video data/clips/small/my_clip.mp4 --run runs/n_core_imgsz960
 ```
 
-Outputs go to `outputs/video_runs/<clip name>/`: an annotated video, `incidents.jsonl`, evidence frames, `per_frame.csv`, `summary.json` and a `report.md` that states what the run is and is not. Inference runs at the size the model was trained at (960). Results on one clip illustrate behaviour; they are not an accuracy measurement.
+Outputs go to `outputs/video_runs/<clip name>/`: an annotated video, `incidents.jsonl`, evidence frames, `per_frame.csv`, `summary.json` and a `report.md` that states what the run is and is not. Inference runs at the size the model was trained at (960). Add `--zones file.yaml` to say where PPE is required (`work_area`) and to define restricted zones; see `experiments/video/work_area_67460.yaml`. Results on one clip illustrate behaviour; they are not an accuracy measurement.
 
 ## Documentation
 

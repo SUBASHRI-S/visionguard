@@ -300,5 +300,7 @@ M7 can proceed in parallel with M2 because rules run on fabricated detections.
 - Dataset software licence: the dataset is CC BY 4.0, but the Ultralytics code is AGPL-3.0. That is fine for a portfolio; commercial use needs a licence review.
 - Person-in-forklift (operator) detection is image-space: someone standing in front of a forklift can be mistaken for its operator and skipped by the proximity rule.
 - Safety thresholds (head region, minimum person size, warn ratio) are placeholders until tuned on validation detections and real clips.
+- Every person in the frame is treated as someone who must wear PPE; the system cannot tell workers from passers-by. The mitigation is a per-camera `work_area` polygon (PPE is only checked for people whose feet are inside it); drawing it is a manual, per-camera set-up step. First real run: one worker plus background pedestrians produced 5 incidents, 4 of them on passers-by.
+- Person-size limits (e.g. `min_person_height_px: 80`) are in pixels, so they behave differently on a 640x360 copy than on the 1080p original. Results on shrunk clips are not comparable with full-size ones until these become fractions of the frame height.
 - Track IDs fragment when a person is partly cut off or hidden: a smoke test on two real clips with a generic person detector gave 6 track IDs for 2 people in one clip. One person can therefore produce more than one incident. This is to be measured with the trained model on real clips and reported.
 - The system supports human review. It is not a replacement for safety procedures.

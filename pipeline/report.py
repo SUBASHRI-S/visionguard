@@ -64,6 +64,7 @@ def to_markdown(summary: dict[str, Any]) -> str:
         "## What this is",
         f"- One clip, processed with the model `{s['weights']}` at inference size {s['imgsz']}, "
         f"detector confidence {s['conf']}.",
+        f"- PPE is checked for: {s.get('work_area', 'whole frame')}.",
         f"- Safety settings: {s['safety_config']}. Tracker: {s['tracker_config']}. Incident timing: {s['temporal_config']}.",
         "- Safety and incident settings are placeholders or were chosen on image validation data, "
         "not tuned on video. A single clip is an illustration, not an accuracy measurement.",
@@ -83,7 +84,8 @@ def to_markdown(summary: dict[str, Any]) -> str:
     for i in incidents:
         lines.append(
             f"- {i['rule_id']} on track {i['track_id']} (episode {i['episode']}): "
-            f"{i['started_timestamp']:.2f}s -> {i['ended_timestamp']:.2f}s, closed by {i['reason']}, "
+            f"{i['started_timestamp']:.2f}s -> {i.get('last_violation_timestamp', i['ended_timestamp']):.2f}s "
+            f"(last violation; closed at {i['ended_timestamp']:.2f}s by {i['reason']}), "
             f"{i['violating_frames']} violating and {i['uncertain_frames']} uncertain frames"
         )
     lines += [
@@ -100,7 +102,8 @@ def to_markdown(summary: dict[str, Any]) -> str:
             f"| {r['track_id']} | {r['first_time']:.2f}-{r['last_time']:.2f} | {r['frames']} | "
             f"{h['yes']}/{h['no']}/{h['unknown']} | {v['yes']}/{v['no']}/{v['unknown']} | {r['operator_frames']} |"
         )
-    lines += ["", f"- person detections without a track id: {s['untracked_person_frames']}",
+    lines += ["", f"- person frames outside the work area (not checked): {s.get('outside_person_frames', 0)}",
+              f"- person detections without a track id: {s['untracked_person_frames']}",
               "", "## Events per rule (frames)", ""]
     for rule, counts in sorted(s["events_per_rule"].items()):
         lines.append(f"- {rule}: {counts.get('violation', 0)} violation, {counts.get('uncertain', 0)} uncertain")

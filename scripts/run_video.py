@@ -31,6 +31,19 @@ def load_yaml(path: Path | None) -> dict | None:
     return data
 
 
+def load_zone_file(path: Path | None) -> tuple[list[Zone], Zone | None]:
+    """Read ``zones:`` (restricted areas) and ``work_area:`` (where PPE is required) from one file.
+
+    Polygons use fractions of the frame (0 to 1) so they survive a change of video size.
+    """
+    data = load_yaml(path) or {}
+    if not isinstance(data, dict) or set(data) - {"zones", "work_area"}:
+        raise ZoneError("the zone file may only contain 'zones' and 'work_area'")
+    zones = [Zone.from_dict(z) for z in data.get("zones", [])]
+    work_area = Zone.from_dict(data["work_area"]) if data.get("work_area") else None
+    return zones, work_area
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("video", type=Path)
@@ -42,7 +55,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--safety-config", type=Path, default=Path("experiments/safety/chosen.yaml"))
     ap.add_argument("--tracker-config", type=Path, default=None)
     ap.add_argument("--temporal-config", type=Path, default=None)
-    ap.add_argument("--zones", type=Path, default=None, help="yaml with a 'zones:' list of {name, polygon}")
+    ap.add_argument("--zones", type=Path, default=None,
+                    help="yaml with 'zones:' (restricted areas) and/or 'work_area:' (PPE is checked only inside it)")
     ap.add_argument("--camera-id", default=None, help="default: the video's file name")
     ap.add_argument("--stride", type=int, default=1, help="process every Nth frame (default 1 = all)")
     ap.add_argument("--max-seconds", type=float, default=None)
@@ -59,8 +73,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise SystemExit(f"cannot find {summary_file}; pass --imgsz explicitly")
             imgsz = json.loads(summary_file.read_text())["config"]["train"]["imgsz"]
         safety_cfg = load_yaml(args.safety_config)
-        zone_cfg = load_yaml(args.zones) or {}
-        zones = [Zone.from_dict(z) for z in zone_cfg.get("zones", [])]
+        zones, work_area = load_zone_file(args.zones)
         tracker_cfg = TrackerConfig.from_dict(load_yaml(args.tracker_config))
         temporal_cfg = TemporalConfig.from_dict(load_yaml(args.temporal_config))
         engine = SafetyEngine.from_config(safety_cfg)
@@ -71,12 +84,12 @@ def main(argv: list[str] | None = None) -> int:
 
     camera_id = args.camera_id or args.video.name
     pipeline = VideoPipeline(detector, engine, PersonTracker(tracker_cfg), IncidentTracker(temporal_cfg),
-                             camera_id=camera_id, zones=zones)
+                             camera_id=camera_id, zones=zones, work_area=work_area)
     out_dir = args.out / args.video.stem
     run_info = {
         "weights": str(weights), "imgsz": imgsz, "conf": args.conf, "device": args.device,
         "safety_config": safety_cfg or "defaults", "tracker_config": tracker_cfg.__dict__,
-        "temporal_config": temporal_cfg.__dict__, "zones": [z.name for z in zones],
+        "temporal_config": temporal_cfg.__dict__, "zones": [z.name for z in zones], "work_area": work_area.name if work_area else "whole frame",
     }
     try:
         summary = process_video(
