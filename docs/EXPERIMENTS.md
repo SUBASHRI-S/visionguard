@@ -117,3 +117,77 @@ removes all of them. The vest had only 2 wrong acceptances, so no vest cutoff wa
   **hypothesis, not adopted**: tuning a vest cutoff on the test split would spend the clean check.
   To be checked on the real-footage set (M11).
 - Counts are per person per image, not incidents. Temporal logic (M6/M8) is not applied yet.
+
+## Video pipeline: first real clip (informal, one clip)
+
+**What this is.** The full chain (detector at 960, ByteTrack, safety rules, incident logic) run on
+one stock clip: `67460-522170651_medium.mp4` (Pixabay file name; 10 s, 25 fps, shrunk to 640x360).
+One worker in an orange vest and **no helmet** shovels sand; passers-by walk in the background.
+I looked at frames of the clip myself; the labels below are my reading of them, not an annotation.
+Settings: detector confidence 0.35, `experiments/safety/chosen.yaml`, tracker and incident timing
+at their placeholder defaults (open after 8 frames, close after 30, track lost after 3 s).
+
+| | Run 1: whole frame checked | Run 2: work area (bottom 40% of the frame) |
+|---|---|---|
+| Incidents opened | 5 | 1 |
+| On the worker (no helmet, whole clip, track 1) | 1 | 1 |
+| On people who appear to be passers-by or far background | 4 | 0 |
+| Track IDs in the clip | 10 | 2 (one is a single frame at the very end) |
+| Worker helmet frames yes / no / unknown | 0 / 246 / 1 | 0 / 246 / 1 |
+| Worker vest frames yes / no / unknown | 242 / 5 / 0 | 242 / 5 / 0 |
+| Mean detect time per frame (CPU, this laptop) | 99 ms | 87 ms |
+
+**What it shows**
+- The worker was followed with one stable ID for the whole clip and the missing helmet was reported
+  as one incident. The vest was correctly seen on 242 of 247 frames; the 5 wrong frames did not
+  open an incident because an incident needs 8 in a row.
+- Small, far-away people were marked "unknown" for the vest instead of "no" and raised nothing.
+- Run 1's extra incidents were people nobody asked to wear PPE. The system has no notion of "worker"
+  versus "passer-by"; the work-area polygon is the mitigation.
+
+**What it does NOT show**
+- The work area was drawn by eye **after** seeing run 1 on this same clip, so run 2 is not
+  independent evidence. It shows the mechanism works, not that a polygon will be right on another camera.
+- One clip with one violating person. There is no recall or false-alarm rate here, and nothing about
+  the forklift and zone rules on video.
+- The 100 ms detect time is one run on a 640x360 copy; it is not a benchmark (M5 is still to do).
+- Pixel thresholds (e.g. minimum person height 80 px) depend on video size, so this result may not
+  carry over to the full-resolution original.
+- Evidence frames from run 1 were not inspected one by one; "passers-by" is inferred from the video.
+
+## Video pipeline: three tuning clips, before and after equipment memory and timing in seconds
+
+All three clips are from the **tuning** subset (see docs/REAL_FOOTAGE_PROTOCOL.md). Same model
+(n_core_imgsz960, size 960, confidence 0.35), same safety settings (`chosen.yaml`).
+
+- **Before:** an incident opened after 8 processed frames (0.3 s), closed after 30 clear frames, no memory.
+- **After:** opens after 3 s, closes after 2 s clear, and an item seen on a tracked person in the last
+  5 s is never reported missing (only "unknown"). These values come from reasoning about how equipment
+  behaves, not from a search over values.
+
+| Clip | What is in it | Incidents before | Incidents after |
+|---|---|---|---|
+| `67460` (work area applied) | one worker, vest, **no helmet** (true violation) | 1 (correct) | 1 (same, correct) |
+| `19832492` | two workers, helmets and vests (compliant) | 3, all false `no_vest` | 0 |
+| `13752015` (stride 2) | forklift operator in helmet and vest (compliant) | 5, all false | 0 |
+
+**Notes on how independent this is.** The new settings were designed after looking at `19832492`,
+so that improvement (3 to 0) is not independent evidence. They were fixed before I saw the forklift
+report, so 5 to 0 on `13752015` is a weak independent check. `67460` shows the settings do not
+lose a real violation, on one person.
+
+**What still looks wrong (the improvement hides some of it)**
+- On `13752015` the operator was recognised as an operator on only 24 of 121 frames, so the
+  proximity rule judged the driver against his own forklift for 52 frames. No incident opened only
+  because those frames never ran 3 s in a row. The fix is not in place; the symptom is masked.
+- The same operator is "unknown" for helmet on 99 and for vest on 104 of 121 frames (the forklift
+  mast crosses his body), so for most of the clip the system cannot confirm PPE either way. "Unknown"
+  is not "safe": a real violator seated behind a mast could be missed, because memory only helps after
+  the item has been seen once.
+- The operator's track id changed once (track 1 to track 7, near 3.3 s) when the mast passed in
+  front, and a second track (6) overlaps track 1 in time; I have not looked at it, so I do not know
+  whether it is a duplicate box or a real person.
+- Memory means a real vest or helmet removal is noticed up to 5 s late.
+
+**Not yet done:** the two held-out clips (`45686`, `13751987`) have not been run. They are to be run
+once with these settings, and the result recorded whatever it is.
