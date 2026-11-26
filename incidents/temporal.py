@@ -18,6 +18,7 @@ Frame kinds for a key:   violating | uncertain | clear (person visible, no event
 Counts are in PROCESSED frames. If you skip frames before analysis, scale the settings to match.
 Events without a track id cannot be followed over time and are ignored (and counted).
 """
+import math
 from dataclasses import dataclass, fields
 from typing import Any, Literal
 
@@ -58,6 +59,38 @@ class TemporalConfig:
                 errors.append(f"{name} must be between {low} and {high}")
         if errors:
             raise IncidentConfigError(errors)
+
+    @classmethod
+    def from_seconds(
+        cls,
+        *,
+        fps: float,
+        frame_stride: int = 1,
+        open_after_seconds: float = 3.0,
+        close_after_seconds: float = 2.0,
+        uncertain_expire_seconds: float = 2.5,
+        track_lost_seconds: float = 3.0,
+    ) -> "TemporalConfig":
+        """Express the timing in seconds of video, so it means the same at 25 fps, 50 fps or with
+        frames skipped. The tracker works in *processed* frames, so seconds are converted using
+        the rate at which frames are actually processed (fps / frame_stride)."""
+        if not 0 < fps <= 240:
+            raise IncidentConfigError([f"fps must be between 0 and 240, got {fps}"])
+        if isinstance(frame_stride, bool) or not isinstance(frame_stride, int) or frame_stride < 1:
+            raise IncidentConfigError(["frame_stride must be a whole number >= 1"])
+        rate = fps / frame_stride
+
+        def frames(seconds: float, name: str) -> int:
+            if isinstance(seconds, bool) or not isinstance(seconds, (int, float)) or seconds <= 0:
+                raise IncidentConfigError([f"{name} must be a positive number of seconds"])
+            return max(1, math.ceil(seconds * rate - 1e-9))
+
+        return cls(
+            open_after_frames=frames(open_after_seconds, "open_after_seconds"),
+            close_after_frames=frames(close_after_seconds, "close_after_seconds"),
+            uncertain_expire_frames=frames(uncertain_expire_seconds, "uncertain_expire_seconds"),
+            track_lost_seconds=track_lost_seconds,
+        )
 
     @classmethod
     def from_dict(cls, data: dict[str, Any] | None) -> "TemporalConfig":

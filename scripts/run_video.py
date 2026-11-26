@@ -14,6 +14,9 @@ from pathlib import Path
 
 import yaml
 
+import cv2
+
+from incidents.memory import MemoryConfig, MemoryConfigError, PPEMemory
 from incidents.temporal import IncidentConfigError, IncidentTracker, TemporalConfig
 from pipeline.detector import DetectorError, YoloDetector
 from pipeline.runner import VideoError, process_video
@@ -29,6 +32,16 @@ def load_yaml(path: Path | None) -> dict | None:
         return None
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     return data
+
+
+def probe_fps(video: Path) -> float:
+    cap = cv2.VideoCapture(str(video))
+    try:
+        if not cap.isOpened():
+            raise ValueError(f"cannot open video: {video}")
+        return float(cap.get(cv2.CAP_PROP_FPS) or 0.0)
+    finally:
+        cap.release()
 
 
 def load_zone_file(path: Path | None) -> tuple[list[Zone], Zone | None]:
@@ -54,7 +67,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--device", default="cpu")
     ap.add_argument("--safety-config", type=Path, default=Path("experiments/safety/chosen.yaml"))
     ap.add_argument("--tracker-config", type=Path, default=None)
-    ap.add_argument("--temporal-config", type=Path, default=None)
+    ap.add_argument("--temporal-config", type=Path, default=None,
+                    help="yaml with timing in processed FRAMES; if given it replaces the --*-seconds options")
+    ap.add_argument("--open-after-seconds", type=float, default=3.0,
+                    help="a violation must persist this long before an incident opens (default 3)")
+    ap.add_argument("--close-after-seconds", type=float, default=2.0,
+                    help="this long without the violation closes the incident (default 2)")
+    ap.add_argument("--memory-seconds", type=float, default=5.0,
+                    help="an item seen on a person this recently is never reported missing; 0 turns it off (default 5)")
     ap.add_argument("--zones", type=Path, default=None,
                     help="yaml with 'zones:' (restricted areas) and/or 'work_area:' (PPE is checked only inside it)")
     ap.add_argument("--camera-id", default=None, help="default: the video's file name")
@@ -75,21 +95,29 @@ def main(argv: list[str] | None = None) -> int:
         safety_cfg = load_yaml(args.safety_config)
         zones, work_area = load_zone_file(args.zones)
         tracker_cfg = TrackerConfig.from_dict(load_yaml(args.tracker_config))
-        temporal_cfg = TemporalConfig.from_dict(load_yaml(args.temporal_config))
+        if args.temporal_config is not None:
+            temporal_cfg = TemporalConfig.from_dict(load_yaml(args.temporal_config))
+        else:
+            temporal_cfg = TemporalConfig.from_seconds(
+                fps=probe_fps(args.video), frame_stride=args.stride,
+                open_after_seconds=args.open_after_seconds, close_after_seconds=args.close_after_seconds)
+        memory = PPEMemory(MemoryConfig(args.memory_seconds)) if args.memory_seconds > 0 else None
         engine = SafetyEngine.from_config(safety_cfg)
         print(f"model {weights}  inference size {imgsz}  conf {args.conf}  device {args.device}")
         detector = YoloDetector(weights, imgsz=imgsz, conf=args.conf, device=args.device)
-    except (SafetyConfigError, IncidentConfigError, TrackerConfigError, ZoneError, DetectorError, ValueError) as exc:
+    except (SafetyConfigError, IncidentConfigError, TrackerConfigError, ZoneError, DetectorError,
+            MemoryConfigError, ValueError) as exc:
         raise SystemExit(f"cannot start: {exc}") from exc
 
     camera_id = args.camera_id or args.video.name
     pipeline = VideoPipeline(detector, engine, PersonTracker(tracker_cfg), IncidentTracker(temporal_cfg),
-                             camera_id=camera_id, zones=zones, work_area=work_area)
+                             camera_id=camera_id, zones=zones, work_area=work_area, memory=memory)
     out_dir = args.out / args.video.stem
     run_info = {
         "weights": str(weights), "imgsz": imgsz, "conf": args.conf, "device": args.device,
         "safety_config": safety_cfg or "defaults", "tracker_config": tracker_cfg.__dict__,
-        "temporal_config": temporal_cfg.__dict__, "zones": [z.name for z in zones], "work_area": work_area.name if work_area else "whole frame",
+        "temporal_config": temporal_cfg.__dict__,
+        "memory_seconds": args.memory_seconds if memory else "off", "zones": [z.name for z in zones], "work_area": work_area.name if work_area else "whole frame",
     }
     try:
         summary = process_video(

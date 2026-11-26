@@ -164,6 +164,7 @@ def process_video(
         "incidents": sorted(incident_rows, key=lambda r: (r["started_frame"], r["rule_id"], r["track_id"])),
         "ignored_untracked_events": pipeline.incidents.ignored_untracked_events,
         "outside_person_frames": outside_frames,
+        "memory_overrides": pipeline.memory.overrides if pipeline.memory else None,
         "tracks": track_log.rows(), "untracked_person_frames": track_log.untracked_person_frames,
         "events_per_rule": count_events(all_events),
         **(run_info or {}),

@@ -65,7 +65,7 @@ def to_markdown(summary: dict[str, Any]) -> str:
         f"- One clip, processed with the model `{s['weights']}` at inference size {s['imgsz']}, "
         f"detector confidence {s['conf']}.",
         f"- PPE is checked for: {s.get('work_area', 'whole frame')}.",
-        f"- Safety settings: {s['safety_config']}. Tracker: {s['tracker_config']}. Incident timing: {s['temporal_config']}.",
+        f"- Safety settings: {s['safety_config']}. Tracker: {s['tracker_config']}. Incident timing: {s['temporal_config']}. Equipment memory: {s.get('memory_seconds', 'n/a')} s.",
         "- Safety and incident settings are placeholders or were chosen on image validation data, "
         "not tuned on video. A single clip is an illustration, not an accuracy measurement.",
         "",
@@ -102,6 +102,9 @@ def to_markdown(summary: dict[str, Any]) -> str:
             f"| {r['track_id']} | {r['first_time']:.2f}-{r['last_time']:.2f} | {r['frames']} | "
             f"{h['yes']}/{h['no']}/{h['unknown']} | {v['yes']}/{v['no']}/{v['unknown']} | {r['operator_frames']} |"
         )
+    if s.get("memory_overrides") is not None:
+        lines += ["", f"- 'no' answers downgraded to 'unknown' because the item was seen on that person moments ago: "
+                      f"{s['memory_overrides']}"]
     lines += ["", f"- person frames outside the work area (not checked): {s.get('outside_person_frames', 0)}",
               f"- person detections without a track id: {s['untracked_person_frames']}",
               "", "## Events per rule (frames)", ""]

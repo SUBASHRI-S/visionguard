@@ -372,3 +372,60 @@ def test_zone_file_loader(tmp_path):
     bad.write_text("work_area:\n  name: x\n  polygon: [[0,0],[1,1]]\n")
     with pytest.raises(ZoneError):
         load_zone_file(bad)
+
+
+# ---------------------------------------------------------------- equipment memory in the pipeline
+
+from incidents.memory import PPEMemory
+
+
+def flicker_script(frames):
+    """A vested person whose vest the detector finds on 1 frame in 3 (it keeps missing the rest)."""
+    p = person()
+    return [[p, helmet_on(p), vest_on(p)] if i % 3 == 0 else [p, helmet_on(p)] for i in range(frames)]
+
+
+def make_vest_pipeline(script, memory, open_after=5):
+    return VideoPipeline(
+        Scripted(script), SafetyEngine.from_config({"enabled_rules": ["no_vest"]}), PersonTracker(),
+        IncidentTracker(TemporalConfig(open_after_frames=open_after, close_after_frames=10, track_lost_seconds=5)),
+        camera_id="cam", memory=memory,
+    )
+
+
+def test_flickering_vest_detection_opens_nothing_with_memory():
+    # misses come in runs of two here, so without memory 5 in a row never happen: use long runs instead
+    p = person()
+    script = [[p, helmet_on(p), vest_on(p)]] + [[p, helmet_on(p)]] * 40     # seen once, then missed for 4 s
+    with_memory = make_vest_pipeline(script, PPEMemory(), open_after=5)
+    without = make_vest_pipeline(script, None, open_after=5)
+    r_with, r_without = run_frames(with_memory, 41), run_frames(without, 41)
+    assert not any(r.transitions for r in r_with)
+    assert any(t.kind == "opened" for r in r_without for t in r.transitions)
+
+
+def test_memory_expires_in_the_pipeline_so_a_real_removal_is_eventually_caught():
+    p = person()
+    script = [[p, helmet_on(p), vest_on(p)]] + [[p, helmet_on(p)]] * 100      # 10 s at 10 fps
+    from incidents.memory import MemoryConfig
+    results = run_frames(make_vest_pipeline(script, PPEMemory(MemoryConfig(2.0)), open_after=5), 101)
+    opened = [t for r in results for t in r.transitions if t.kind == "opened"]
+    assert len(opened) == 1 and opened[0].timestamp > 2.0
+
+
+def test_never_vested_person_is_still_caught_with_memory_on():
+    p = person()
+    results = run_frames(make_vest_pipeline([[p, helmet_on(p)]] * 20, PPEMemory(), open_after=5), 20)
+    assert any(t.kind == "opened" for r in results for t in r.transitions)
+
+
+def test_runner_reports_memory_overrides(tmp_path):
+    video = make_video(tmp_path / "clip.mp4", frames=20)
+    p = small_person()
+    vest = Detection("vest", 0.9, Box(85, 90, 195, 150))     # sits on this small person's torso
+    script = [[p, vest]] + [[p]] * 19
+    pipeline = VideoPipeline(Scripted(script), SafetyEngine.from_config({"enabled_rules": ["no_vest"]}),
+                             PersonTracker(), IncidentTracker(), camera_id="cam", memory=PPEMemory())
+    summary = process_video(video, pipeline, tmp_path / "out", run_info={"memory_seconds": 5.0})
+    assert summary["memory_overrides"] >= 1
+    assert "downgraded" in (tmp_path / "out" / "report.md").read_text()

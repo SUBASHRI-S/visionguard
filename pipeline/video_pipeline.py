@@ -16,12 +16,13 @@ Details that are easy to get wrong:
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from time import perf_counter
 from typing import Sequence
 
 import numpy as np
 
+from incidents.memory import PPEMemory
 from incidents.temporal import IncidentTracker, Transition
 from pipeline.detector import FrameDetector
 from safety.contracts import PERSON, Detection, PPEStatus
@@ -56,6 +57,7 @@ class VideoPipeline:
         camera_id: str,
         zones: Sequence[Zone] = (),
         work_area: Zone | None = None,
+        memory: PPEMemory | None = None,
     ) -> None:
         if not camera_id:
             raise ValueError("camera_id must not be empty")
@@ -65,6 +67,7 @@ class VideoPipeline:
         # PPE is only required inside the work area. People outside it (passers-by, a road behind
         # the site) are still tracked and drawn, but the safety rules never see them.
         self.work_area = work_area
+        self.memory = memory  # optional: downgrade 'no' to 'unknown' for items seen a moment ago
 
     def process_frame(self, frame: np.ndarray, frame_index: int, timestamp: float) -> FrameResult:
         if not isinstance(frame, np.ndarray) or frame.ndim != 3 or frame.shape[2] != 3 or frame.size == 0:
@@ -90,6 +93,8 @@ class VideoPipeline:
             engine_detections, camera_id=self.camera_id, frame_index=frame_index, timestamp=timestamp,
             frame_width=width, frame_height=height, zones=self.zones, track_ids=track_ids,
         )
+        if self.memory is not None:
+            ctx = replace(ctx, statuses=tuple(self.memory.apply(ctx.statuses, ctx.track_ids, timestamp)))
         events = self.engine.evaluate(ctx)
         transitions = self.incidents.update(
             camera_id=self.camera_id, frame_index=frame_index, timestamp=timestamp,
