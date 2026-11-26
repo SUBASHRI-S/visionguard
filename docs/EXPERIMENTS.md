@@ -191,3 +191,37 @@ lose a real violation, on one person.
 
 **Not yet done:** the two held-out clips (`45686`, `13751987`) have not been run. They are to be run
 once with these settings, and the result recorded whatever it is.
+
+## Video pipeline: two held-out clips (run once, settings not changed afterwards)
+
+Same model and settings as the three tuning clips (open after 3 s, close after 2 s, memory 5 s, no
+work area, `chosen.yaml`). I predicted before running: `13751987` no incident, `45686` at least one
+real incident. **Both predictions were wrong.**
+
+| Clip | What is in it (my reading of frames) | Result |
+|---|---|---|
+| `13751987` (stride 2) | worker in blue helmet and **red hi-vis vest** with reflective stripes, side view | **1 false incident:** `no_vest` on the whole clip (193 violating frames). Helmet 198 yes of 202. Vest: 0 yes, 193 no, 9 unknown |
+| `45686` | man in orange shirt and olive cap sweeping a drain; passers-by in motorbike helmets; a blurred man in white in the foreground | **0 incidents.** Probably a missed violation (see below) |
+
+**Why, as far as I can tell**
+- `13751987`: the detector never found the red vest in any frame. Equipment memory cannot help
+  when the item has never been seen. This is a detector gap (vest colour or view angle), not a
+  threshold problem.
+- `45686`: three tracks had vest "no" on 36, 70 and 46 frames, but none reached the 72 frames
+  (3 s) needed, because people were in view for under 3 s or were hidden by the foreground person
+  (track 4 was "unknown" on 81 of 151 frames). One track had helmet "yes" on 79 frames although I
+  see a cap, which suggests the helmet detector accepts caps and motorbike helmets. I did not
+  inspect the evidence images, so this is a hypothesis.
+- The 3 s persistence requirement that removed false alarms on the tuning clips can also hide real
+  violations in short clips of moving people. On a long continuous camera this matters less; I have
+  no data on that.
+
+**What this means**
+- The gains on the tuning clips did **not** carry over: 1 false alarm and 1 probable miss on 2
+  held-out clips. The numbers were not tuned further to fix them.
+- These two clips have now been examined, so they are no longer clean held-out data. A new set of
+  clips is needed for any later claim.
+- The limiting factor looks like detector coverage (hi-vis colours, caps versus helmets, side
+  and back views, 638 training images that are partly generated), not the rule logic.
+- Next experiments to try, each judged on the image test split and on new clips, not on these two:
+  a larger model (`yolo11s`) at 960, and more varied training data.
