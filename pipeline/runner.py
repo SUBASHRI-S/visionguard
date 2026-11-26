@@ -14,9 +14,10 @@ from __future__ import annotations
 
 import csv
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from time import perf_counter
-from typing import Callable
+from typing import Callable, Protocol
 
 import cv2
 
@@ -24,6 +25,12 @@ from incidents.temporal import Transition
 from pipeline.render import draw_result
 from pipeline.report import TrackLog, count_events, to_markdown
 from pipeline.video_pipeline import FrameResult, VideoPipeline
+
+
+class TransitionSink(Protocol):
+    """Anything that wants to be told when an incident opens or closes (e.g. ``IncidentStore``)."""
+
+    def record_transition(self, t: Transition, *, run_id: str, evidence_path: str | None = None) -> object: ...
 
 
 class VideoError(RuntimeError):
@@ -49,10 +56,13 @@ def process_video(
     max_seconds: float | None = None,
     write_video: bool = True,
     run_info: dict | None = None,
+    sink: TransitionSink | None = None,
+    run_id: str | None = None,
     progress: Callable[[int, int], None] | None = None,
 ) -> dict:
     if frame_stride < 1:
         raise ValueError("frame_stride must be at least 1")
+    run_id = run_id or f"{video.stem}-{datetime.now(timezone.utc):%Y%m%dT%H%M%S}"
     if max_seconds is not None and max_seconds <= 0:
         raise ValueError("max_seconds must be positive")
     cap = cv2.VideoCapture(str(video))
@@ -108,9 +118,13 @@ def process_video(
                                last_violation_timestamp=t.event.timestamp,
                                violating_frames=t.violating_frames, uncertain_frames=t.uncertain_frames)
                     incident_rows.append(rec)
+                evidence_path = None
                 if annotated is not None:
                     name = f"{t.rule_id}_track{t.track_id}_ep{t.episode}_{t.kind}_f{t.frame_index}.jpg"
-                    cv2.imwrite(str(out_dir / "evidence" / name), annotated)
+                    evidence_path = out_dir / "evidence" / name
+                    cv2.imwrite(str(evidence_path), annotated)
+                if sink is not None:
+                    sink.record_transition(t, run_id=run_id, evidence_path=str(evidence_path) if evidence_path else None)
 
             index = -1
             while True:
@@ -157,7 +171,7 @@ def process_video(
 
     n = max(processed, 1)
     summary = {
-        "video": video.name, "source_frames": total, "fps": fps, "frame_size": [width, height],
+        "video": video.name, "run_id": run_id, "source_frames": total, "fps": fps, "frame_size": [width, height],
         "frame_stride": frame_stride, "frames_processed": processed,
         "wall_seconds": round(elapsed, 2),
         "timing_ms": {k: v / n for k, v in sums.items()},

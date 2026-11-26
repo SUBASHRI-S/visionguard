@@ -16,6 +16,7 @@ import yaml
 
 import cv2
 
+from incidents.store import IncidentStore
 from incidents.memory import MemoryConfig, MemoryConfigError, PPEMemory
 from incidents.temporal import IncidentConfigError, IncidentTracker, TemporalConfig
 from pipeline.detector import DetectorError, YoloDetector
@@ -82,6 +83,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-seconds", type=float, default=None)
     ap.add_argument("--no-video", action="store_true", help="skip writing annotated.mp4")
     ap.add_argument("--out", type=Path, default=Path("outputs/video_runs"))
+    ap.add_argument("--db", default=None, help="save incidents to this database, e.g. sqlite:///outputs/visionguard.db")
+    ap.add_argument("--run-id", default=None, help="label for this run in the database (default: clip name + time)")
     args = ap.parse_args(argv)
 
     try:
@@ -119,16 +122,22 @@ def main(argv: list[str] | None = None) -> int:
         "temporal_config": temporal_cfg.__dict__,
         "memory_seconds": args.memory_seconds if memory else "off", "zones": [z.name for z in zones], "work_area": work_area.name if work_area else "whole frame",
     }
+    store = None
+    if args.db:
+        store = IncidentStore(args.db)
+        store.create_schema()
     try:
         summary = process_video(
             args.video, pipeline, out_dir, frame_stride=args.stride, max_seconds=args.max_seconds,
-            write_video=not args.no_video, run_info=run_info,
+            write_video=not args.no_video, run_info=run_info, sink=store, run_id=args.run_id,
             progress=lambda done, total: print(f"  {done} frames processed"),
         )
     except (VideoError, ValueError) as exc:
         raise SystemExit(f"error: {exc}") from exc
     print(f"done in {summary['wall_seconds']}s -> {out_dir}")
     print(f"incidents: {len(summary['incidents'])}; tracks: {len(summary['tracks'])}")
+    if store:
+        print(f"saved to {args.db} as run {summary['run_id']}")
     print(f"read {out_dir / 'report.md'}")
     return 0
 
