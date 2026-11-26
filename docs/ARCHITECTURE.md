@@ -34,7 +34,8 @@ VisionGuard watches workplace camera feeds, detects people, helmets, vests and v
 | PPE association, zones, proximity, four rules and engine (`safety/`, + 82 tests, with deliberate-bug checks) | Done on fabricated detections. **Thresholds are untuned placeholders**; not yet run on real model output or real clips |
 | Incident temporal logic (`incidents/temporal.py`, 31 tests, deliberate-bug checks): opens after N violating frames, closes after M clear frames or track loss, uncertain frames hold state | Done on fabricated event streams. **N, M and the timeouts are untuned placeholders** |
 | Tracker adapter (`trackers/person_tracker.py`, 26 tests, deliberate-bug checks): ByteTrack behind our own types, validated config, person-index to track-id map | Done on fabricated motion (moving people, gaps, newcomers, ID reuse, end-to-end into the incident logic). **Not yet measured on real video: ID switches and the `track_buffer` value are untested.** A new person is confirmed one frame late by design |
-| Video pipeline, incident persistence, evidence, alerts | Not started. `lap` 0.5.14 installs on the dev machine (Python 3.14) |
+| Video pipeline (`pipeline/`, `scripts/run_video.py`, 24 tests, deliberate-bug checks): detector wrapper at the trained image size, tracker, safety engine and incident logic per frame; writes annotated video, incident log, evidence frames, per-frame CSV, summary and report | Done and tested with a scripted detector and synthetic video. Smoke-tested on two real clips with a generic COCO person detector (wiring only: it has no helmet/vest classes). **Not yet run with the trained model on real clips.** `pipeline/detector.py` is separate from the older `inference/detector.py`; they are to be reconciled when the API is built |
+| Incident persistence (database), alerts | Not started. Incidents are currently written to `incidents.jsonl` per run. `lap` 0.5.14 installs on the dev machine (Python 3.14) |
 | API, frontend, Docker, CI/CD | Not started |
 
 ## 3. Key decisions (decision log)
@@ -299,4 +300,5 @@ M7 can proceed in parallel with M2 because rules run on fabricated detections.
 - Dataset software licence: the dataset is CC BY 4.0, but the Ultralytics code is AGPL-3.0. That is fine for a portfolio; commercial use needs a licence review.
 - Person-in-forklift (operator) detection is image-space: someone standing in front of a forklift can be mistaken for its operator and skipped by the proximity rule.
 - Safety thresholds (head region, minimum person size, warn ratio) are placeholders until tuned on validation detections and real clips.
+- Track IDs fragment when a person is partly cut off or hidden: a smoke test on two real clips with a generic person detector gave 6 track IDs for 2 people in one clip. One person can therefore produce more than one incident. This is to be measured with the trained model on real clips and reported.
 - The system supports human review. It is not a replacement for safety procedures.
