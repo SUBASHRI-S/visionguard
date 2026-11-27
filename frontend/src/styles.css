@@ -132,3 +132,4 @@ select, input, textarea { font: inherit; color: inherit; background: var(--bg); 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 .back { display: none; margin-bottom: 1rem; }
 @media (max-width: 800px) { .back { display: inline-block; } }
+.bars__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }

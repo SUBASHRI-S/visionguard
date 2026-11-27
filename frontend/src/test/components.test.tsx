@@ -52,6 +52,17 @@ describe("ReviewPanel", () => {
   });
 });
 
+describe("StatsView", () => {
+  it("uses the singular for one incident and keeps long camera names in the label", async () => {
+    const long = "67460-522170651_medium.mp4";
+    vi.stubGlobal("fetch", vi.fn(async () => json({ total: 1, active: 0, by_rule: { no_helmet: 1 }, by_status: { open: 1 }, by_severity: { high: 1 }, by_camera: { [long]: 1 }, by_day: {} })));
+    window.location.hash = "#/stats";
+    render(<App />);
+    expect(await screen.findByText("1 incident in total.")).toBeInTheDocument();
+    expect(screen.getByTitle(long)).toBeInTheDocument();
+  });
+});
+
 describe("App", () => {
   it("lists incidents and reviews one", async () => {
     let current = detail;

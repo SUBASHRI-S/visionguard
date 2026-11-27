@@ -13,7 +13,7 @@ function Bars({ title, data, label }: { title: string; data: Record<string, numb
         <ul>
           {entries.map(([k, v]) => (
             <li key={k}>
-              <span>{label ? label(k) : k}</span>
+              <span className="bars__label" title={label ? label(k) : k}>{label ? label(k) : k}</span>
               <span className="bars__track"><span style={{ width: `${(v / max) * 100}%` }} /></span>
               <span className="bars__n">{v}</span>
             </li>
@@ -36,7 +36,7 @@ export function StatsView({ settings }: { settings: ApiSettings }) {
     <div className="detail">
       <h2>Summary</h2>
       <p className="lead">{s.total === 0 ? "No incidents have been recorded." : queueSentence(s.active, waiting)}</p>
-      <p className="muted small">{s.total} incidents in total.</p>
+      <p className="muted small">{s.total === 1 ? "1 incident in total." : `${s.total} incidents in total.`}</p>
       <Bars title="By rule" data={s.by_rule} label={ruleLabel} />
       <Bars title="By status" data={s.by_status} label={(k) => STATUS_LABEL[k as Status] ?? k} />
       <Bars title="By camera" data={s.by_camera} />
