@@ -39,7 +39,7 @@ VisionGuard watches workplace camera feeds, detects people, helmets, vests and v
 | API (`backend/`, 39 tests, ten deliberate-bug checks, also run against a real uvicorn server): `/health`, `GET /api/v1/incidents` (filters, paging), `GET /api/v1/incidents/{id}`, `PATCH /api/v1/incidents/{id}` (review status), `GET /api/v1/incidents/{id}/evidence/{kind}`, `GET /api/v1/stats`; optional API key, CORS allow-list, evidence confined to one folder | Done for incidents. Not built: image/video detection endpoints, cameras/zones/rules/models/experiments endpoints, WebSocket, users or JWT (the reviewer name is sent in the request body), rate limiting |
 | Alerts | Not started. `lap` 0.5.14 installs on the dev machine (Python 3.14) |
 | Dashboard (`frontend/`: React 19, Vite, TypeScript, 25 Vitest tests, plus a pytest check that its status table matches the store's rules): review queue with filters and paging, incident page with a duration bar, saved pictures, status history and review actions, summary page, connection settings | Done for incidents and stats; checked in a headless browser against a real API with seeded data. Not built: live video view, zones/cameras/rules pages, authentication beyond the shared key, mobile layout beyond a basic single column. Not tested with real incident data from the trained model |
-| Docker and CI (`Dockerfile.api`, `Dockerfile.web`, `docker-compose.yml`, `.github/workflows/ci.yml`, `requirements-ci.txt`) | Written. The Docker images were **not built** by me (no Docker daemon in my environment); I ran the API's exact file set in a clean Python environment and built the dashboard from its lock file, and both worked. The CI workflow's `docker` job is the first real build. CI uses Python 3.13 while local development uses 3.14, so a version-specific problem could show only on one. No model weights or video processing in containers yet; no deployment, image publishing or CD |
+| Docker and CI (`Dockerfile.api`, `Dockerfile.web`, `docker-compose.yml`, `.github/workflows/ci.yml`, `requirements-ci.txt`) | Done. CI run #1 on GitHub passed all three jobs (Python tests, dashboard, Docker image build), so the images do build. I have not yet read the Python job's test count in the log, and I have not run `docker compose up` myself (no Docker daemon in my environment). CI uses Python 3.13 while local development uses 3.14, so a version-specific problem could show only on one. No model weights or video processing in containers yet; no deployment, image publishing or CD |
 
 ## 3. Key decisions (decision log)
 
@@ -111,7 +111,8 @@ backend/      api/, services/, db/, workers/, core/ (config, logging, auth)
 frontend/     React dashboard
 experiments/  experiment configs and reports
 tests/        unit, integration, API
-docker/       Dockerfiles, compose
+pipeline/     per-frame video pipeline, runner, report (built)
+Dockerfile.api, Dockerfile.web, docker-compose.yml   at the repository root
 docs/         this file, benchmarks, evaluation, limitations
 ```
 

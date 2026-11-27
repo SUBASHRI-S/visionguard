@@ -91,6 +91,7 @@ Dashboard: http://localhost:8080. API docs: http://localhost:8000/docs. The data
 ## Documentation
 
 - [Architecture and engineering plan](docs/ARCHITECTURE.md)
+- [Roadmap: what is done, what is next](docs/ROADMAP.md)
 - [Dataset card](datasets/README.md)
 - [Real-footage protocol](docs/REAL_FOOTAGE_PROTOCOL.md)
 
