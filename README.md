@@ -1,5 +1,7 @@
 # VisionGuard
 
+[![CI](https://github.com/SUBASHRI-S/visionguard/actions/workflows/ci.yml/badge.svg)](https://github.com/SUBASHRI-S/visionguard/actions/workflows/ci.yml)
+
 VisionGuard is a computer vision system for workplace safety. It detects people, helmets, vests and vehicles in camera feeds, tracks people over time, and raises reviewable incidents when someone is missing protective equipment, enters a restricted zone, or comes close to a vehicle. Every incident keeps evidence, and the system's accuracy is measured and reported honestly.
 
 > **Project status: in development.** See the status table in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). This README only describes what is actually built and tested.
