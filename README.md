@@ -49,6 +49,18 @@ python -m scripts.run_video data/clips/small/my_clip.mp4 --run runs/n_core_imgsz
 
 Add `--db sqlite:///outputs/visionguard.db` to also save every incident (with its status history and evidence paths) to a database; this needs `python -m pip install -r requirements-backend.txt`. Outputs go to `outputs/video_runs/<clip name>/`: an annotated video, `incidents.jsonl`, evidence frames, `per_frame.csv`, `summary.json` and a `report.md` that states what the run is and is not. Inference runs at the size the model was trained at (960). Timing is in seconds (`--open-after-seconds 3`, `--close-after-seconds 2`), and `--memory-seconds 5` stops a vest or helmet that was seen on a person moments ago from being reported missing when the detector briefly misses it. Add `--zones file.yaml` to say where PPE is required (`work_area`) and to define restricted zones; see `experiments/video/work_area_67460.yaml`. Results on one clip illustrate behaviour; they are not an accuracy measurement.
 
+## Run the API
+
+```powershell
+python -m pip install -r requirements-backend.txt
+python -m uvicorn backend.main:create_app --factory --port 8000
+```
+
+Open http://127.0.0.1:8000/docs for the interactive API page. Settings are environment variables:
+`VG_DB_URL` (default `sqlite:///outputs/visionguard.db`), `VG_EVIDENCE_ROOT` (default `outputs`),
+`VG_API_KEY` (optional; if set, send it as the `X-API-Key` header on `/api` calls) and
+`VG_CORS_ORIGINS` (browser addresses allowed to call the API).
+
 ## Documentation
 
 - [Architecture and engineering plan](docs/ARCHITECTURE.md)
