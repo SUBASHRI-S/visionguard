@@ -74,6 +74,18 @@ npm run dev
 
 Open http://localhost:5173. The list on the left is the review queue; pick an incident to see where it sits on the video timeline, its saved pictures and its history, and to acknowledge it, resolve it or mark it as a false alarm (your name is recorded). **Connection** sets the API address and key. Start the API from the repository root: saved picture paths are relative to where the video run was started.
 
+## Run everything with Docker
+
+```powershell
+docker compose up --build
+```
+
+Dashboard: http://localhost:8080. API docs: http://localhost:8000/docs. The database and pictures are kept in `./outputs` on your machine. To process a video and see its incidents in the dashboard, run it as before with `--db sqlite:///outputs/visionguard.db`; the API container reads the same folder. The API image does not include PyTorch (the API only serves stored incidents), so it is small. To require a key, uncomment `VG_API_KEY` in `docker-compose.yml` and enter the same key under Connection in the dashboard.
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push: the Python test suite (Python 3.13, CPU-only PyTorch, versions pinned in `requirements-ci.txt`), the dashboard's type check, tests and build, and a build of both Docker images.
+
 ## Documentation
 
 - [Architecture and engineering plan](docs/ARCHITECTURE.md)

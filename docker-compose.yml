@@ -1,0 +1,30 @@
+# One command to run the API and the dashboard:  docker compose up --build
+#   dashboard: http://localhost:8080      API docs: http://localhost:8000/docs
+# Incidents and pictures live in ./outputs on your machine, so they survive restarts.
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8000:8000"
+    environment:
+      VG_DB_URL: sqlite:////app/outputs/visionguard.db
+      VG_EVIDENCE_ROOT: /app/outputs
+      VG_CORS_ORIGINS: http://localhost:8080,http://127.0.0.1:8080
+      # VG_API_KEY: choose-a-key-of-16-or-more-characters   (then enter it under Connection in the dashboard)
+    volumes:
+      - ./outputs:/app/outputs
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        VITE_API_URL: http://127.0.0.1:8000
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
