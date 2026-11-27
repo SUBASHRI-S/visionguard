@@ -28,7 +28,15 @@ Cell 1, get the code and install:
 !pip install -q ultralytics==8.4.216 mlflow==3.18.0
 ```
 
-Cell 2, unzip the dataset (check the real path with `!ls /kaggle/input` if it differs):
+Cell 2, put the dataset in place. **Kaggle unpacks an uploaded zip automatically**, so there is no zip to unzip: the data is already a folder under `/kaggle/input/datasets/<your-user>/construction-ppe/construction-ppe` (check with `!find /kaggle/input -maxdepth 4`). Copy it:
+
+```
+!mkdir -p datasets/raw
+!cp -r /kaggle/input/datasets/<your-user>/construction-ppe/construction-ppe datasets/raw/
+!ls datasets/raw/construction-ppe
+```
+
+It must list `images`, `labels`, `data.yaml`. The old unzip form, kept for reference if you attach a zip instead:
 
 ```
 !mkdir -p datasets/raw

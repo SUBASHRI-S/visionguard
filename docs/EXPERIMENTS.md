@@ -45,6 +45,23 @@ Test per class for the 960 run (mAP50-95): person 0.789, helmet 0.728, vest 0.76
   per image at 960. Not a benchmark: no matching 640 measurement under the same conditions.
   Proper CPU benchmarks come with the ONNX / OpenVINO milestone.
 
+## Experiment 3: model size YOLO11n vs YOLO11s (both at 960) - provisional, one seed
+
+Question: is the detector limited by model capacity? One change from `n_core_imgsz960`: `yolo11n.pt` -> `yolo11s.pt`. Same dataset (`d1dc2ab4d1a9`), seed 42, 100 epochs, batch 16, Kaggle Tesla T4. Training log: all 100 epochs ran (no early stop).
+
+| Run | Model | Train time | Val mAP50 | Val mAP50-95 | Val recall |
+|---|---|---|---|---|---|
+| n_core_imgsz960 | YOLO11n (about 2.6 M parameters, from the Ultralytics model table) | 0.438 h | 0.953 | 0.755 | 0.922 |
+| s_core_imgsz960 | YOLO11s (9.4 M parameters, 21.7 GFLOPs in the training log) | 0.563 h | 0.946 | 0.769 | 0.923 |
+
+YOLO11s per class on validation (mAP50-95): person 0.860, helmet 0.767, vest 0.821, forklift 0.627.
+
+**Reading:** mAP50 is slightly lower (-0.007), mAP50-95 slightly higher (+0.014), recall the same. In the last 40 epochs the validation mAP50-95 of the 11s run moved between 0.74 and 0.77 from epoch to epoch, which is about the size of the difference. **This is not evidence that the larger model is better.** The test split has not been used for this run.
+
+**Cost not yet measured:** YOLO11s needs roughly 3 times the arithmetic of YOLO11n per frame (21.7 GFLOPs in our log against about 6.5 for YOLO11n in the Ultralytics model table; I did not print the 11n figure from our own run), so on the CPU-only laptop it will be slower than the roughly 70 to 100 ms per frame seen with 11n. I have not benchmarked it.
+
+**Next:** repeat both models with seed 43 (`n_core_imgsz960_s43`, `s_core_imgsz960_s43`). Only if 11s is ahead in both seeds by more than the seed-to-seed gap does it go to the test split and to the clips in `docs/HELDOUT_V2.md`.
+
 ## Open items from these experiments
 
 - `inference/detector.py` has no image-size setting. Serving must use the training size (960).

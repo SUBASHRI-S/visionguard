@@ -1,0 +1,16 @@
+# Repeat of n_core_imgsz960 with a different seed (43), nothing else changed. Purpose: measure seed-to-seed variation before comparing model sizes.
+name: n_core_imgsz960_s43
+model: yolo11n.pt
+dataset:
+  profile: core
+  version: d1dc2ab4d1a9
+train:
+  epochs: 100
+  imgsz: 960
+  batch: 16
+  patience: 30
+  workers: 2
+  seed: 43
+mlflow:
+  tracking_uri: sqlite:///mlflow.db
+  experiment: visionguard
