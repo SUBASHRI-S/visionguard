@@ -1,0 +1,6 @@
+{
+  "open": ["acknowledged", "resolved", "false_positive"],
+  "acknowledged": ["resolved", "false_positive"],
+  "resolved": ["open"],
+  "false_positive": ["open"]
+}

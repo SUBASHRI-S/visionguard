@@ -61,6 +61,19 @@ Open http://127.0.0.1:8000/docs for the interactive API page. Settings are envir
 `VG_API_KEY` (optional; if set, send it as the `X-API-Key` header on `/api` calls) and
 `VG_CORS_ORIGINS` (browser addresses allowed to call the API).
 
+## Run the dashboard
+
+Needs Node 20.19+ or 22.12+. With the API running (previous section), in a second terminal:
+
+```powershell
+cd frontend
+npm install
+npm test
+npm run dev
+```
+
+Open http://localhost:5173. The list on the left is the review queue; pick an incident to see where it sits on the video timeline, its saved pictures and its history, and to acknowledge it, resolve it or mark it as a false alarm (your name is recorded). **Connection** sets the API address and key. Start the API from the repository root: saved picture paths are relative to where the video run was started.
+
 ## Documentation
 
 - [Architecture and engineering plan](docs/ARCHITECTURE.md)

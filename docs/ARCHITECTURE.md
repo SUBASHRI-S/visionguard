@@ -38,7 +38,8 @@ VisionGuard watches workplace camera feeds, detects people, helmets, vests and v
 | Incident persistence (`incidents/store.py`, 52 tests, deliberate-bug checks): SQLAlchemy store with incidents, status history and evidence rows; safe to record the same transition twice; connected to the video runner (`--db`) | Done on SQLite. PostgreSQL and Alembic migrations are not yet set up (tables are created with `create_all`). Cameras, zones, rule configs, jobs and alert tables are not built |
 | API (`backend/`, 39 tests, ten deliberate-bug checks, also run against a real uvicorn server): `/health`, `GET /api/v1/incidents` (filters, paging), `GET /api/v1/incidents/{id}`, `PATCH /api/v1/incidents/{id}` (review status), `GET /api/v1/incidents/{id}/evidence/{kind}`, `GET /api/v1/stats`; optional API key, CORS allow-list, evidence confined to one folder | Done for incidents. Not built: image/video detection endpoints, cameras/zones/rules/models/experiments endpoints, WebSocket, users or JWT (the reviewer name is sent in the request body), rate limiting |
 | Alerts | Not started. `lap` 0.5.14 installs on the dev machine (Python 3.14) |
-| API, frontend, Docker, CI/CD | Not started |
+| Dashboard (`frontend/`: React 19, Vite, TypeScript, 25 Vitest tests, plus a pytest check that its status table matches the store's rules): review queue with filters and paging, incident page with a duration bar, saved pictures, status history and review actions, summary page, connection settings | Done for incidents and stats; checked in a headless browser against a real API with seeded data. Not built: live video view, zones/cameras/rules pages, authentication beyond the shared key, mobile layout beyond a basic single column. Not tested with real incident data from the trained model |
+| Docker, CI/CD | Not started |
 
 ## 3. Key decisions (decision log)
 
