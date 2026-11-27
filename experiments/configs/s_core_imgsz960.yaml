@@ -1,0 +1,21 @@
+# Experiment 3. One change from n_core_imgsz960: model size yolo11n -> yolo11s.
+# Hypothesis: the failures seen on real clips (hi-vis colours, caps versus helmets, side and back
+# views) are partly a capacity limit, so a larger backbone may separate them better. The dataset
+# is small (638 training images), so it may also just overfit: this run tests that.
+# Batch stays 16 so only one thing changes. If the GPU runs out of memory, rerun with batch 8
+# under a NEW name (s_core_imgsz960_b8) and say so in docs/EXPERIMENTS.md.
+name: s_core_imgsz960
+model: yolo11s.pt
+dataset:
+  profile: core
+  version: d1dc2ab4d1a9
+train:
+  epochs: 100
+  imgsz: 960
+  batch: 16
+  patience: 30
+  workers: 2
+  seed: 42
+mlflow:
+  tracking_uri: sqlite:///mlflow.db
+  experiment: visionguard

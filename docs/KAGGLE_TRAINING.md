@@ -2,7 +2,7 @@
 
 Your laptop has no NVIDIA GPU, so real training runs on a free cloud GPU. The same config file and the same `dataset_version` are used everywhere, so results are reproducible.
 
-> Status: the commands below were checked on CPU with a synthetic dataset. They have **not** yet been run on Kaggle. If something differs there, fix this page and note it.
+> Status: these steps were used for the two completed Kaggle runs (`n_core_baseline`, `n_core_imgsz960`, Tesla T4). If something differs on your next run, fix this page and note it.
 
 ## Why this is safe
 
@@ -76,3 +76,13 @@ Open http://127.0.0.1:5000. Run the `smoke` config first on your PC to confirm e
 - Metrics logged here are on the **validation** split. The test split is untouched until M3.
 - Weights (`*.pt`) are not committed. Keep them in a GitHub Release or locally.
 - Change one thing per run, give each run a new name, never overwrite a run.
+
+## Experiment 3: `s_core_imgsz960` (YOLO11s at 960)
+
+One change from `n_core_imgsz960`: `yolo11n.pt` becomes `yolo11s.pt`. Config: `experiments/configs/s_core_imgsz960.yaml`. A ready notebook is `notebooks/kaggle_s_core_imgsz960.ipynb` (Kaggle > New Notebook > File > Import Notebook), or paste the same cells by hand: replace `n_core_baseline` with `s_core_imgsz960` in cells 4 and 5 above.
+
+Things to know before reading the result:
+- The training set is only 638 images, so a bigger model may overfit instead of helping. That is a valid result and goes in `docs/EXPERIMENTS.md` either way.
+- One seed per run. Validation and test differences of about 0.02 mAP are within what a seed change can do. If the gain is that small, repeat both the 11n and 11s runs with `seed: 43` before claiming anything.
+- Choose the run on **validation**. The test split is evaluated once (`scripts/evaluate.py` has a guard). Then run the new weights on the five clips in `docs/HELDOUT_V2.md`, once, with settings fixed beforehand.
+- Out-of-memory: do not change the config. Copy it to a new name with `batch: 8` and record that as a separate run.
