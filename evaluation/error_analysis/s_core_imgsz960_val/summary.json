@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "run_name": "s_core_imgsz960",
+    "split": "val",
+    "imgsz": 960,
+    "dataset_version": "d1dc2ab4d1a9",
+    "conf": 0.25,
+    "iou": 0.5
+  },
+  "per_class": {
+    "person": {
+      "tp": 327,
+      "fn": 11,
+      "fp": 10,
+      "recall": 0.9674556213017751,
+      "precision": 0.9703264094955489
+    },
+    "helmet": {
+      "tp": 214,
+      "fn": 22,
+      "fp": 16,
+      "recall": 0.9067796610169492,
+      "precision": 0.9304347826086956
+    },
+    "vest": {
+      "tp": 239,
+      "fn": 15,
+      "fp": 5,
+      "recall": 0.9409448818897638,
+      "precision": 0.9795081967213115
+    },
+    "forklift": {
+      "tp": 55,
+      "fn": 4,
+      "fp": 6,
+      "recall": 0.9322033898305084,
+      "precision": 0.9016393442622951
+    }
+  },
+  "recall_by_size": {
+    "person": {
+      "small": {
+        "objects": 103,
+        "recall": 0.912621359223301
+      },
+      "medium": {
+        "objects": 47,
+        "recall": 0.9787234042553191
+      },
+      "large": {
+        "objects": 188,
+        "recall": 0.9946808510638298
+      }
+    },
+    "helmet": {
+      "small": {
+        "objects": 150,
+        "recall": 0.8533333333333334
+      },
+      "medium": {
+        "objects": 85,
+        "recall": 1.0
+      },
+      "large": {
+        "objects": 1,
+        "recall": 1.0
+      }
+    },
+    "vest": {
+      "small": {
+        "objects": 107,
+        "recall": 0.9065420560747663
+      },
+      "medium": {
+        "objects": 43,
+        "recall": 0.9534883720930233
+      },
+      "large": {
+        "objects": 104,
+        "recall": 0.9711538461538461
+      }
+    },
+    "forklift": {
+      "small": {
+        "objects": 5,
+        "recall": 0.8
+      },
+      "medium": {
+        "objects": 8,
+        "recall": 1.0
+      },
+      "large": {
+        "objects": 46,
+        "recall": 0.9347826086956522
+      }
+    }
+  },
+  "confusions": {
+    "person": {
+      "background": 11
+    },
+    "helmet": {
+      "background": 22
+    },
+    "vest": {
+      "background": 14,
+      "person": 1
+    },
+    "forklift": {
+      "background": 4
+    }
+  },
+  "images": 160,
+  "images_with_errors": 40
+}

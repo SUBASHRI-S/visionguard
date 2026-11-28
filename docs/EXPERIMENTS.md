@@ -60,7 +60,26 @@ YOLO11s per class on validation (mAP50-95): person 0.860, helmet 0.767, vest 0.8
 
 **Cost not yet measured:** YOLO11s needs roughly 3 times the arithmetic of YOLO11n per frame (21.7 GFLOPs in our log against about 6.5 for YOLO11n in the Ultralytics model table; I did not print the 11n figure from our own run), so on the CPU-only laptop it will be slower than the roughly 70 to 100 ms per frame seen with 11n. I have not benchmarked it.
 
-**Next:** repeat both models with seed 43 (`n_core_imgsz960_s43`, `s_core_imgsz960_s43`). Only if 11s is ahead in both seeds by more than the seed-to-seed gap does it go to the test split and to the clips in `docs/HELDOUT_V2.md`.
+### Seed repeat (seed 43), validation split
+
+| Run | Seed | Val mAP50 | Val mAP50-95 | Val recall | Where the number comes from |
+|---|---|---|---|---|---|
+| n_core_imgsz960 | 42 | 0.953 | 0.755 | 0.922 | best weights, final validation table |
+| n_core_imgsz960_s43 | 43 | 0.939 | 0.753 | 0.898 | **last epoch** (`results.csv`); the best-weights table was not read |
+| s_core_imgsz960 | 42 | 0.946 | 0.769 | 0.923 | best weights (last epoch: 0.945 / 0.763 / 0.923) |
+| s_core_imgsz960_s43 | 43 | 0.950 | 0.766 | 0.895 | best weights (last epoch: 0.946 / 0.766 / 0.910) |
+
+The rows are not all measured the same way (best weights against last epoch), so differences of about 0.01 should not be over-read. Training time: 0.563 h and 0.625 h for 11s, 0.438 h for 11n (seed 42).
+
+**Reading, written after both seeds:**
+- mAP50-95: YOLO11s is ahead in both seeds, by about 0.011 to 0.014 (0.766 to 0.769 against 0.753 to 0.755). The two 11s seeds differ by only 0.003.
+- mAP50 and recall: no consistent difference (11n seed 42 has the highest mAP50, 0.953). Recall moved by up to 0.028 between seeds of the same model.
+- So the larger model draws tighter boxes (mAP50-95 rewards that) but does not find more objects. Violations depend on finding the helmet, the vest and the person, not on how tight the box is.
+- Cost: about 3 times the arithmetic per frame (see above) and 28 to 43 percent longer training. Not benchmarked on CPU.
+
+**Decision (provisional):** keep YOLO11n at 960 as the working model. YOLO11s does not go to the test split. This can change if the small-object recall comparison below shows a clear gain on small helmets and vests, which is the weakness seen on real clips.
+
+**Still to do for this experiment:** run `scripts/error_analysis` on the three new runs and compare small-object recall with `n_core_imgsz960` (helmet 0.827, vest 0.897, person 0.893 for small objects). Two seeds, one dataset of 160 validation images: treat all of this as indicative.
 
 ## Open items from these experiments
 
