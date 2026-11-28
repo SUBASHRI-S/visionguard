@@ -99,10 +99,7 @@ The rows are not all measured the same way (best weights against last epoch), so
 - False alarms: YOLO11s has fewer in every class and in both seeds (all classes 37 and 41 against 55 and 63). The counts are small, but the direction never flips. This is the clearest difference between the models.
 - Why it matters here: a false helmet detection on a bare head or a cap hides a no-helmet violation, and a false vest detection hides a no-vest violation. That is the failure seen on real clips (a cap read as a helmet). Fewer false helmet and vest boxes is the effect that would help the product, if it holds on real footage.
 
-**Decision (provisional, replaces the earlier "keep YOLO11n"):** no winner yet. YOLO11s looks better on false alarms and on tight boxes, YOLO11n is about 3 times cheaper per frame. Two things settle it, in this order:
-1. (Done) CPU time per frame: 66 ms against 150 ms, see above. Both are usable for offline review of a video; only YOLO11n keeps up with more than 6 detections per second.
-2. Run both once on the five clips in `docs/HELDOUT_V2.md` with identical, pre-fixed pipeline settings (`experiments/safety/chosen.yaml`), and compare against what each clip should show.
-The test split stays untouched until one model is chosen.
+**Decision:** settled by the protocol in `docs/HELDOUT_V2.md`, see "Fresh held-out clips v2" at the end of this file. In short: YOLO11n stays as the working model.
 
 ## Open items from these experiments
 
@@ -284,3 +281,50 @@ real incident. **Both predictions were wrong.**
   and back views, 638 training images that are partly generated), not the rule logic.
 - Next experiments to try, each judged on the image test split and on new clips, not on these two:
   a larger model (`yolo11s`) at 960, and more varied training data.
+
+## Fresh held-out clips v2: YOLO11n vs YOLO11s (each run once, settings fixed in advance)
+
+Protocol and decision rule: `docs/HELDOUT_V2.md`, committed before these runs. Five clips, `scripts/run_video.py` defaults (confidence 0.35, `experiments/safety/chosen.yaml`, open after 3 s, close after 2 s, memory 5 s, every frame, no work area). Both models at input 960.
+
+**How the judging was done and how far to trust it:** I looked at the annotated videos (640 px wide, a handful of frames per clip, zoomed in once for one clip) and the reports. All five clips were treated as sites that require a helmet and a vest, as the protocol says. Identity of some people after track-id changes, and whether a distant head wears a cap or a helmet, could not always be settled; I counted only clear-cut cases and left the rest out. Treat the totals as a rough count, not a measurement. Nothing was changed after seeing a result.
+
+### Incidents raised
+
+| Clip | YOLO11n | YOLO11s |
+|---|---|---|
+| 154950 (forklift, operator, person on foot) | 4: no_helmet on both people, no_vest on the operator, forklift_proximity on the person on foot (all true) | 4: no_helmet and no_vest on the person on foot, no_helmet on the operator in two episodes because the track id changed (all true). **No forklift_proximity incident, although the report counts 478 proximity violation frames; cause not found** |
+| 12098511 (bridge pier, orange vests, yellow helmets) | 1: no_vest on person #3 (**false alarm**: zoomed frames show an orange vest with reflective strips) | 1: the same false no_vest on #3 |
+| 13715751 (brick workers, orange T-shirt) | 2: no_helmet and no_vest on one worker (true) | 3: the same two plus no_vest on the worker in the orange T-shirt (true; the shirt was not accepted as a vest) |
+| 14493704 (portrait, workers with hats, no vests) | 1: no_vest (true) | 2: no_vest on two people (true) |
+| 18689366 (stone wall, caps and scarves) | 2: no_helmet and no_vest on the worker in the white shirt (true) | 2: no_vest on two people (true); the white-shirt worker's missing helmet was not raised (helmet mostly "unknown") |
+| **Total** | 10 incidents, 9 true, 1 false | 12 incidents, 11 true, 1 false |
+
+### Clear-cut errors (false alarms plus visible violations not raised)
+
+| Clip | YOLO11n | YOLO11s |
+|---|---|---|
+| 154950 | 1 missed: no_vest on the person on foot | 1 missed: no_vest on the operator; plus the unexplained missing proximity incident |
+| 12098511 | 1 false alarm (orange vest) | 1 false alarm (orange vest) |
+| 13715751 | 2 missed: both violations of the worker in the orange shirt | 1 missed: that worker's missing helmet |
+| 14493704 | 1 missed: no_helmet on the man in the hat (a hat, not a helmet), not raised | 1 missed: the same man in the hat |
+| 18689366 | 2 missed: caps read as helmets on two people | 3 missed: the same two caps, plus the white-shirt worker's missing helmet |
+| **Total** | **7** | **7 (8 if the proximity gap counts)** |
+
+**Result against the rule:** YOLO11s would need at least 2 fewer errors; it has the same number or one more. **YOLO11n stays as the working model**, and YOLO11s is not evaluated on the test split.
+
+### What both models got wrong (more important than the comparison)
+
+- **Orange hi-vis vest with reflective strips, worn by a person facing the camera, read as "no vest"** for the whole clip (12098511), in both models. This is the red/orange vest weakness already seen on the tuning clips, now on a clip neither model was tuned on.
+- **Caps read as helmets** on people in 18689366, so their missing helmets were never raised, in both models.
+- **The orange T-shirt (13715751) was briefly read as a vest** (9 frames for YOLO11n, 2 for YOLO11s) but did not produce a false "vest present" overall.
+- **Equipment on the forklift operator stays "unknown"** most of the time (154950), and **track ids change** (the same operator became several tracks; the same worker in the orange shirt too), which splits one long violation into pieces shorter than the 3 s needed to open an incident.
+- Neither model's gaps look like a rule-logic problem. They are detector coverage and track continuity, as concluded before.
+
+### Speed in the pipeline
+
+Mean detect time per frame in the pipeline reports: YOLO11n 75 to 88 ms, YOLO11s 176 to 394 ms. The isolated benchmark gave 66 ms and 150 ms. The YOLO11s runs were slower than the benchmark; other programs may have been running on the laptop, which I could not check.
+
+### Status of these clips
+
+The five clips are now used for these two model versions. Any later claim needs new clips.
+

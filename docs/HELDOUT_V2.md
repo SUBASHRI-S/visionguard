@@ -40,3 +40,7 @@ Run once each, same settings, on the five clips above:
 - Judging: for every incident each run raised, and every clearly visible violation it did not raise, I look at the annotated video and the saved pictures and mark it **true**, **false alarm** or **missed**. Doubtful cases are marked "unclear" and counted for neither side. A person whose equipment cannot be seen is not a miss.
 - Rule: YOLO11s is chosen only if it has at least **2 fewer errors** (false alarms plus misses, over all five clips) than YOLO11n. Otherwise YOLO11n stays, because YOLO11s takes 2.3 times longer per frame. If both have very few errors, the clips cannot separate them and YOLO11n stays.
 - Both results and the judgement go into `docs/EXPERIMENTS.md`, whatever they are. The five clips are then used up for these two model versions.
+
+## Status
+
+Used on 2026-11-28 for YOLO11n against YOLO11s, each once. Results and the judgement: the last section of `docs/EXPERIMENTS.md`. These clips are used up for those two model versions.
