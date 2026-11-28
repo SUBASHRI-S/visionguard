@@ -328,3 +328,12 @@ Mean detect time per frame in the pipeline reports: YOLO11n 75 to 88 ms, YOLO11s
 
 The five clips are now used for these two model versions. Any later claim needs new clips.
 
+
+
+## Experiment 4 (prepared, not run): add SH17 photos to training
+
+- **Question:** do varied photos with helmets and vests fix the orange-vest and cap errors, without hurting the rest?
+- **One change:** training data only (`core` to `core_sh17`: same base data plus SH17 photos with a helmet or vest, train only). Model YOLO11n, 960, 100 epochs, batch 16, seed 42, as in `n_core_imgsz960`.
+- **Fixed before running:** val and test are unchanged. The decision rule uses new clips only, because the heldout_v2 clips are used up for earlier model versions. Image-level scores are reported but are not enough on their own to call it a win.
+- **Data notes:** `docs/DATASET_SH17.md`. Licence is non-commercial, so nothing from SH17 goes into the repository.
+- **Results:** not yet available.

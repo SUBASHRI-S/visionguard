@@ -22,7 +22,7 @@ Last updated 2026-11-27. "Done" means built **and** tested as described in `docs
 
 1. **Detection quality on real footage (the main weakness).** Findings so far: red high-visibility vests are never detected from the side, a cap is read as a helmet, vests are missed from some angles, a forklift mast hides the operator, and gains from tuning did not carry over to the held-out clips.
    - Collect 4 or 5 new clips (licence checked) as a fresh held-out set, since the old held-out clips have been looked at.
-   - Experiment 3 (YOLO11s at 960) is done: no clear gain over YOLO11n on image validation or on the five fresh clips, and 2.3 times slower (see `docs/EXPERIMENTS.md`). Next: more varied training data (red and orange vests worn facing the camera, caps, side and back views), licence check first.
+   - Experiment 3 (YOLO11s at 960) is done: no clear gain over YOLO11n on image validation or on the five fresh clips, and 2.3 times slower (see `docs/EXPERIMENTS.md`). Experiment 4 is prepared (not run yet): YOLO11n plus SH17 photos with a helmet or vest, added to train only (`docs/DATASET_SH17.md`, `notebooks/kaggle_n_core_sh17_imgsz960.ipynb`). Claims about it need new clips, because the heldout_v2 clips are used up.
    - Report results in `docs/EXPERIMENTS.md`, including when it does not help.
 2. **Replay evaluation (M11).** Label a few clips and measure incidents found, missed and false, per clip. This is the number that matters for the product.
 3. **CPU speed benchmarks (M5).** PyTorch against ONNX and OpenVINO on CPU, frames per second at 640 and 960, on a stated machine.

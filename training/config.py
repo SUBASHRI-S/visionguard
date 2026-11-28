@@ -13,6 +13,9 @@ import yaml
 
 from datasets.construction_ppe import PROFILES
 
+# core_sh17 = core plus SH17 training photos (datasets/sh17.py); built by scripts/extend_with_sh17.py
+VALID_PROFILES = sorted({*PROFILES, "core_sh17"})
+
 NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
 VERSION_RE = re.compile(r"^[0-9a-f]{12}$")
 DEVICE_RE = re.compile(r"^(auto|cpu|\d+(,\d+)*)$")
@@ -178,8 +181,8 @@ def parse_config(data: Any) -> TrainConfig:
 
     dataset = _section(data, "dataset", {"profile", "version"}, errors)
     profile = dataset.get("profile")
-    if profile not in PROFILES:
-        errors.append(f"dataset.profile must be one of {sorted(PROFILES)}")
+    if profile not in VALID_PROFILES:
+        errors.append(f"dataset.profile must be one of {VALID_PROFILES}")
     version = dataset.get("version")
     if not isinstance(version, str) or not VERSION_RE.match(version):
         errors.append("dataset.version must be a 12-character lowercase hex dataset_version")
