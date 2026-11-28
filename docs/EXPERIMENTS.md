@@ -58,7 +58,7 @@ YOLO11s per class on validation (mAP50-95): person 0.860, helmet 0.767, vest 0.8
 
 **Reading:** mAP50 is slightly lower (-0.007), mAP50-95 slightly higher (+0.014), recall the same. In the last 40 epochs the validation mAP50-95 of the 11s run moved between 0.74 and 0.77 from epoch to epoch, which is about the size of the difference. **This is not evidence that the larger model is better.** The test split has not been used for this run.
 
-**Cost not yet measured:** YOLO11s needs roughly 3 times the arithmetic of YOLO11n per frame (21.7 GFLOPs in our log against about 6.5 for YOLO11n in the Ultralytics model table; I did not print the 11n figure from our own run), so on the CPU-only laptop it will be slower than the roughly 70 to 100 ms per frame seen with 11n. I have not benchmarked it.
+**CPU cost (measured, one clip, one run):** on the development laptop (Windows 11, Intel CPU with 8 logical cores, torch 2.15.0+cpu with 7 threads), `YoloDetector.detect` at input 960 took a median of **66.2 ms/frame for YOLO11n** (15.1 frames/s, 95th percentile 74.6 ms) and **150.3 ms/frame for YOLO11s** (6.65 frames/s, 95th percentile 153.6 ms): YOLO11s is 2.3 times slower. My earlier estimate from arithmetic alone was about 3 times, so the estimate was too high. Source: `scripts/benchmark_models.py` on `154950-809834548_medium.mp4`, 60 frames, 5 warm-up calls dropped. Under about 10 percent difference would be noise; this difference is far larger.
 
 ### Seed repeat (seed 43), validation split
 
@@ -77,9 +77,32 @@ The rows are not all measured the same way (best weights against last epoch), so
 - So the larger model draws tighter boxes (mAP50-95 rewards that) but does not find more objects. Violations depend on finding the helmet, the vest and the person, not on how tight the box is.
 - Cost: about 3 times the arithmetic per frame (see above) and 28 to 43 percent longer training. Not benchmarked on CPU.
 
-**Decision (provisional):** keep YOLO11n at 960 as the working model. YOLO11s does not go to the test split. This can change if the small-object recall comparison below shows a clear gain on small helmets and vests, which is the weakness seen on real clips.
+### Error analysis of the four runs (validation, confidence 0.25, IoU 0.5, input 960)
 
-**Still to do for this experiment:** run `scripts/error_analysis` on the three new runs and compare small-object recall with `n_core_imgsz960` (helmet 0.827, vest 0.897, person 0.893 for small objects). Two seeds, one dataset of 160 validation images: treat all of this as indicative.
+| Measure (160 images) | n seed 42 | n seed 43 | s seed 42 | s seed 43 |
+|---|---|---|---|---|
+| Images with at least one error | 49 | 53 | 40 | 47 |
+| Helmet recall, all sizes | 0.890 | 0.873 | 0.907 | 0.881 |
+| Helmet recall, small (150 objects) | 0.827 | 0.807 | 0.853 | 0.820 |
+| Vest recall, small (107) | 0.897 | 0.916 | 0.907 | 0.925 |
+| Person recall, small (103) | 0.893 | 0.903 | 0.913 | 0.903 |
+| False alarms: helmet | 25 | 25 | 16 | 20 |
+| False alarms: vest | 10 | 14 | 5 | 4 |
+| False alarms: person | 12 | 14 | 10 | 10 |
+| False alarms: forklift | 8 | 10 | 6 | 7 |
+| False alarms, all four classes | 55 | 63 | 37 | 41 |
+
+(The n seed-42 column is `evaluation/error_analysis/n_core_imgsz960_val`; the others were added with this experiment.)
+
+**Reading:**
+- Small-object recall: YOLO11s is ahead in most cells, but by 1 to 4 objects out of 100 to 150, and the two seeds of the same model differ by about as much (small helmet: n 0.827 and 0.807, s 0.853 and 0.820). I cannot call this a gain.
+- False alarms: YOLO11s has fewer in every class and in both seeds (all classes 37 and 41 against 55 and 63). The counts are small, but the direction never flips. This is the clearest difference between the models.
+- Why it matters here: a false helmet detection on a bare head or a cap hides a no-helmet violation, and a false vest detection hides a no-vest violation. That is the failure seen on real clips (a cap read as a helmet). Fewer false helmet and vest boxes is the effect that would help the product, if it holds on real footage.
+
+**Decision (provisional, replaces the earlier "keep YOLO11n"):** no winner yet. YOLO11s looks better on false alarms and on tight boxes, YOLO11n is about 3 times cheaper per frame. Two things settle it, in this order:
+1. (Done) CPU time per frame: 66 ms against 150 ms, see above. Both are usable for offline review of a video; only YOLO11n keeps up with more than 6 detections per second.
+2. Run both once on the five clips in `docs/HELDOUT_V2.md` with identical, pre-fixed pipeline settings (`experiments/safety/chosen.yaml`), and compare against what each clip should show.
+The test split stays untouched until one model is chosen.
 
 ## Open items from these experiments
 

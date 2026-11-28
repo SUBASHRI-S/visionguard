@@ -1,0 +1,35 @@
+{
+  "meta": {
+    "video": "154950-809834548_medium.mp4",
+    "imgsz": 960,
+    "frames": 60,
+    "warmup": 5,
+    "machine": {
+      "platform": "Windows-11-10.0.26300-SP0",
+      "processor": "Intel64 Family 6 Model 140 Stepping 1, GenuineIntel",
+      "python": "3.14.6",
+      "device": "cpu",
+      "cpu_count": "8",
+      "torch": "2.15.0+cpu",
+      "torch_threads": "7"
+    }
+  },
+  "results": {
+    "n_core_imgsz960": {
+      "frames": 60.0,
+      "median_ms": 66.2,
+      "p95_ms": 74.6,
+      "min_ms": 63.2,
+      "max_ms": 101.6,
+      "fps_at_median": 15.1
+    },
+    "s_core_imgsz960": {
+      "frames": 60.0,
+      "median_ms": 150.3,
+      "p95_ms": 153.6,
+      "min_ms": 148.6,
+      "max_ms": 201.1,
+      "fps_at_median": 6.65
+    }
+  }
+}

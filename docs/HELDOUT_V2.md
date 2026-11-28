@@ -30,3 +30,13 @@ All were shrunk to 10 s at 640 px wide with `scripts/shrink_clip.py`. File names
 | `40814-426920963_medium` (close-up rebar work) | Mostly partial bodies |
 | `19832481-hd_1920_1080_25fps` | Its id is next to the tuning clip `19832492` and it looks like the same site, so it would not be independent |
 | `12981246`, `17145555` | Indoor factory and workshop; PPE requirements unclear |
+
+## Protocol for comparing YOLO11n and YOLO11s (written before any run)
+
+Run once each, same settings, on the five clips above:
+
+- Weights: `runs/n_core_imgsz960/weights/best.pt` and `runs/s_core_imgsz960/weights/best.pt`, each at input 960 (as trained).
+- Pipeline settings: the defaults of `scripts/run_video.py` (confidence 0.35, `experiments/safety/chosen.yaml`, open after 3 s, close after 2 s, equipment memory 5 s, every frame, no work area, no zones). Nothing is changed after seeing a result.
+- Judging: for every incident each run raised, and every clearly visible violation it did not raise, I look at the annotated video and the saved pictures and mark it **true**, **false alarm** or **missed**. Doubtful cases are marked "unclear" and counted for neither side. A person whose equipment cannot be seen is not a miss.
+- Rule: YOLO11s is chosen only if it has at least **2 fewer errors** (false alarms plus misses, over all five clips) than YOLO11n. Otherwise YOLO11n stays, because YOLO11s takes 2.3 times longer per frame. If both have very few errors, the clips cannot separate them and YOLO11n stays.
+- Both results and the judgement go into `docs/EXPERIMENTS.md`, whatever they are. The five clips are then used up for these two model versions.
